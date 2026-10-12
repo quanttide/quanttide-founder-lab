@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>认知地图 · 推理器</title>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#171a23; --line:#2a2f3a; --fg:#e6e8ee; --dim:#8b93a7;
+    --trigger:#e8590c; --emotion:#7048e8; --method:#0ca678;
+    --expression:#1c7ed6; --value:#c92a2a; --anti:#868e96;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font:14px/1.6 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+       background:var(--bg);color:var(--fg);display:flex;height:100vh;overflow:hidden}
+  aside{width:340px;flex:none;background:var(--panel);border-right:1px solid var(--line);
+        display:flex;flex-direction:column;overflow:hidden}
+  aside h1{font-size:16px;margin:0;padding:16px 18px 4px}
+  .sub{padding:0 18px 12px;color:var(--dim);font-size:12px}
+  .search{padding:0 14px 10px}
+  .search input{width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--line);
+        background:#0d1017;color:var(--fg);font-size:13px}
+  .list{flex:1;overflow-y:auto;padding:0 8px 16px}
+  .grp{color:var(--dim);font-size:11px;letter-spacing:.08em;padding:12px 10px 6px}
+  .item{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:7px;
+        cursor:pointer;font-size:13px}
+  .item:hover{background:#1f2430}
+  .item.sel{background:#243049;outline:1px solid #3b82f6}
+  .dot{width:9px;height:9px;border-radius:50%;flex:none}
+  .item .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .item .num{color:var(--dim);font-size:11px}
+  main{flex:1;position:relative;overflow:hidden}
+  svg{width:100%;height:100%;display:block;cursor:grab}
+  svg.grabbing{cursor:grabbing}
+  .edge{stroke:#3a4152;stroke-width:1.6;fill:none;marker-end:url(#arrow)}
+  .edge.on{stroke:#ffd43b;stroke-width:2.6;marker-end:url(#arrow-hi)}
+  .edge.faded{opacity:.12}
+  .elen{fill:var(--dim);font-size:9px;pointer-events:none}
+  .node circle{stroke:#0f1117;stroke-width:2}
+  .node text{fill:var(--fg);font-size:11px;paint-order:stroke;
+             stroke:#0f1117;stroke-width:3px;stroke-linejoin:round}
+  .node{cursor:pointer}
+  .node.faded{opacity:.12}
+  .node.sel circle{stroke:#ffd43b;stroke-width:3.5}
+  .node.hi circle{stroke:#ffd43b;stroke-width:2.6}
+  .legend{position:absolute;left:14px;bottom:14px;background:rgba(23,26,35,.92);
+          border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:12px}
+  .legend div{display:flex;align-items:center;gap:7px;padding:2px 0}
+  .panel{position:absolute;top:14px;right:14px;width:300px;max-height:calc(100% - 28px);
+         overflow-y:auto;background:rgba(23,26,35,.96);border:1px solid var(--line);
+         border-radius:12px;padding:14px 16px;font-size:13px}
+  .panel h2{margin:0 0 4px;font-size:15px}
+  .tag{display:inline-block;font-size:11px;padding:1px 8px;border-radius:20px;color:#fff}
+  .kv{margin:10px 0 0}
+  .kv .k{color:var(--dim);font-size:11px;letter-spacing:.06em;margin-bottom:3px}
+  .kv .row{padding:4px 0;border-bottom:1px dashed #262b36}
+  .kv .row:last-child{border-bottom:none}
+  .q{padding:5px 8px;margin:4px 0;border-radius:6px;background:#1d2230;cursor:pointer;font-size:12px}
+  .q:hover{background:#26304a}
+  .empty{color:var(--dim)}
+  code{background:#0d1017;padding:1px 5px;border-radius:4px;font-size:12px}
+</style>
+</head>
+<body>
+<aside>
+  <h1>认知地图 · 推理器</h1>
+  <div class="sub" id="meta">加载中…</div>
+  <div class="search"><input id="q" placeholder="搜索对象…（如 缩小窗口）"></div>
+  <div class="list" id="list"></div>
+</aside>
+<main>
+  <svg id="svg">
+    <defs>
+      <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6"
+              orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3a4152"/></marker>
+      <marker id="arrow-hi" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7"
+              orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#ffd43b"/></marker>
+    </defs>
+    <g id="viewport"><g id="edges"></g><g id="nodes"></g></g>
+  </svg>
+  <div class="legend" id="legend"></div>
+  <div class="panel" id="panel"><h2>选中一个节点</h2>
+    <div class="empty">点击左侧或图上节点，查看它的正向/反向推理结果。</div></div>
+</main>
+<script id="data" type="application/json">
+{"meta": {"schema": "profile-index/1", "title": "认知地图", "source": "journal/ 跨日期蒸馏"}, "kinds": {"trigger": 8, "emotion": 6, "method": 15, "expression": 3, "value": 7, "anti": 3}, "nodes": [{"data": {"id": "睡醒时的千头万绪", "label": "睡醒时的千头万绪", "kind": "trigger", "color": "#e8590c", "group": "", "file": "triggers.md", "note": ""}}, {"data": {"id": "战略失败", "label": "战略失败", "kind": "trigger", "color": "#e8590c", "group": "", "file": "triggers.md", "note": ""}}, {"data": {"id": "进度停滞", "label": "进度停滞", "kind": "trigger", "color": "#e8590c", "group": "", "file": "triggers.md", "note": ""}}, {"data": {"id": "AI 变成纯粹执行者", "label": "AI 变成纯粹执行者", "kind": "trigger", "color": "#e8590c", "group": "", "file": "triggers.md", "note": ""}}, {"data": {"id": "范围失控", "label": "范围失控", "kind": "trigger", "color": "#e8590c", "group": "", "file": "triggers.md", "note": ""}}, {"data": {"id": "不确定是否合规", "label": "不确定是否合规", "kind": "trigger", "color": "#e8590c", "group": "", "file": "triggers.md", "note": ""}}, {"data": {"id": "自己不想看自己写的内容", "label": "自己不想看自己写的内容", "kind": "trigger", "color": "#e8590c", "group": "", "file": "triggers.md", "note": ""}}, {"data": {"id": "疏离感的封闭", "label": "疏离感的封闭", "kind": "trigger", "color": "#e8590c", "group": "", "file": "triggers.md", "note": "2026-10-05 由「放假独处、心里封闭」蒸馏；与既有情绪「疏离」同名同源，此条为可被激活的触发点"}}, {"data": {"id": "高压与喘息", "label": "高压与喘息", "kind": "emotion", "color": "#7048e8", "group": "", "file": "emotions.md", "note": ""}}, {"data": {"id": "失控与重新掌控", "label": "失控与重新掌控", "kind": "emotion", "color": "#7048e8", "group": "", "file": "emotions.md", "note": ""}}, {"data": {"id": "疏离", "label": "疏离", "kind": "emotion", "color": "#7048e8", "group": "", "file": "emotions.md", "note": ""}}, {"data": {"id": "规模焦虑", "label": "规模焦虑", "kind": "emotion", "color": "#7048e8", "group": "", "file": "emotions.md", "note": ""}}, {"data": {"id": "厌倦与熟练", "label": "厌倦与熟练", "kind": "emotion", "color": "#7048e8", "group": "", "file": "emotions.md", "note": ""}}, {"data": {"id": "信心的底色", "label": "信心的底色", "kind": "emotion", "color": "#7048e8", "group": "", "file": "emotions.md", "note": "该情绪此前无 responds_to 出边（断头），2026-10-05 已补"}}, {"data": {"id": "缩小窗口", "label": "缩小窗口", "kind": "method", "color": "#0ca678", "group": "思维框架", "file": "methods.md", "note": ""}}, {"data": {"id": "非商业化与商业化切开", "label": "非商业化与商业化切开", "kind": "method", "color": "#0ca678", "group": "思维框架", "file": "methods.md", "note": ""}}, {"data": {"id": "从实验室到平台", "label": "从实验室到平台", "kind": "method", "color": "#0ca678", "group": "思维框架", "file": "methods.md", "note": ""}}, {"data": {"id": "量潮经济体视角", "label": "量潮经济体视角", "kind": "method", "color": "#0ca678", "group": "思维框架", "file": "methods.md", "note": ""}}, {"data": {"id": "从依赖个人到依赖规则", "label": "从依赖个人到依赖规则", "kind": "method", "color": "#0ca678", "group": "思维框架", "file": "methods.md", "note": ""}}, {"data": {"id": "客户视角重组", "label": "客户视角重组", "kind": "method", "color": "#0ca678", "group": "思维框架", "file": "methods.md", "note": ""}}, {"data": {"id": "装进框架", "label": "装进框架", "kind": "method", "color": "#0ca678", "group": "应对策略", "file": "methods.md", "note": ""}}, {"data": {"id": "回到虚构世界", "label": "回到虚构世界", "kind": "method", "color": "#0ca678", "group": "应对策略", "file": "methods.md", "note": ""}}, {"data": {"id": "找合规来套", "label": "找合规来套", "kind": "method", "color": "#0ca678", "group": "应对策略", "file": "methods.md", "note": ""}}, {"data": {"id": "去建设平台", "label": "去建设平台", "kind": "method", "color": "#0ca678", "group": "应对策略", "file": "methods.md", "note": ""}}, {"data": {"id": "用现有项目做阶梯", "label": "用现有项目做阶梯", "kind": "method", "color": "#0ca678", "group": "应对策略", "file": "methods.md", "note": ""}}, {"data": {"id": "补觉与放手", "label": "补觉与放手", "kind": "method", "color": "#0ca678", "group": "应对策略", "file": "methods.md", "note": ""}}, {"data": {"id": "交给标准化", "label": "交给标准化", "kind": "method", "color": "#0ca678", "group": "应对策略", "file": "methods.md", "note": ""}}, {"data": {"id": "刻意引导", "label": "刻意引导", "kind": "method", "color": "#0ca678", "group": "", "file": "triggers.md", "note": "仅以描述出现，未独立成节"}}, {"data": {"id": "修剪上下文", "label": "修剪上下文", "kind": "method", "color": "#0ca678", "group": "", "file": "triggers.md", "note": "仅以描述出现，未独立成节"}}, {"data": {"id": "私有数据驱动的创作实验", "label": "私有数据驱动的创作实验", "kind": "expression", "color": "#1c7ed6", "group": "", "file": "expressions.md", "note": ""}}, {"data": {"id": "存稿不求工程质量", "label": "存稿不求工程质量", "kind": "expression", "color": "#1c7ed6", "group": "", "file": "expressions.md", "note": ""}}, {"data": {"id": "三本小说的同构倾向", "label": "三本小说的同构倾向", "kind": "expression", "color": "#1c7ed6", "group": "", "file": "expressions.md", "note": ""}}, {"data": {"id": "标准化才配走公司流程", "label": "标准化才配走公司流程", "kind": "value", "color": "#c92a2a", "group": "", "file": "values.md", "note": ""}}, {"data": {"id": "带人必须有商业收益", "label": "带人必须有商业收益", "kind": "value", "color": "#c92a2a", "group": "", "file": "values.md", "note": ""}}, {"data": {"id": "解决实际问题优于精英社交", "label": "解决实际问题优于精英社交", "kind": "value", "color": "#c92a2a", "group": "", "file": "values.md", "note": ""}}, {"data": {"id": "合规是刚性边界", "label": "合规是刚性边界", "kind": "value", "color": "#c92a2a", "group": "", "file": "values.md", "note": ""}}, {"data": {"id": "利用人性恶赚钱不能长久", "label": "利用人性恶赚钱不能长久", "kind": "value", "color": "#c92a2a", "group": "", "file": "values.md", "note": ""}}, {"data": {"id": "积累感", "label": "积累感", "kind": "value", "color": "#c92a2a", "group": "", "file": "values.md", "note": ""}}, {"data": {"id": "与自己保持连接", "label": "与自己保持连接", "kind": "value", "color": "#c92a2a", "group": "", "file": "values.md", "note": "2026-10-05 新增，作为「疏离 → 修剪上下文」这条链的价值锚点（原地图该处 serves 为空）"}}, {"data": {"id": "个人化表达硬塞进组织流程", "label": "个人化表达硬塞进组织流程", "kind": "anti", "color": "#868e96", "group": "", "file": "values.md", "note": ""}}, {"data": {"id": "无收益的一对一投入", "label": "无收益的一对一投入", "kind": "anti", "color": "#868e96", "group": "", "file": "values.md", "note": ""}}, {"data": {"id": "消耗型活动", "label": "消耗型活动", "kind": "anti", "color": "#868e96", "group": "", "file": "values.md", "note": ""}}], "edges": [{"data": {"id": "睡醒时的千头万绪|evokes|高压与喘息", "source": "睡醒时的千头万绪", "target": "高压与喘息", "kind": "evokes"}}, {"data": {"id": "战略失败|evokes|信心的底色", "source": "战略失败", "target": "信心的底色", "kind": "evokes"}}, {"data": {"id": "进度停滞|evokes|高压与喘息", "source": "进度停滞", "target": "高压与喘息", "kind": "evokes"}}, {"data": {"id": "AI 变成纯粹执行者|evokes|失控与重新掌控", "source": "AI 变成纯粹执行者", "target": "失控与重新掌控", "kind": "evokes"}}, {"data": {"id": "范围失控|evokes|规模焦虑", "source": "范围失控", "target": "规模焦虑", "kind": "evokes"}}, {"data": {"id": "不确定是否合规|evokes|疏离", "source": "不确定是否合规", "target": "疏离", "kind": "evokes"}}, {"data": {"id": "自己不想看自己写的内容|evokes|疏离", "source": "自己不想看自己写的内容", "target": "疏离", "kind": "evokes"}}, {"data": {"id": "疏离感的封闭|evokes|疏离", "source": "疏离感的封闭", "target": "疏离", "kind": "evokes"}}, {"data": {"id": "睡醒时的千头万绪|responds_to|装进框架", "source": "睡醒时的千头万绪", "target": "装进框架", "kind": "responds_to"}}, {"data": {"id": "战略失败|responds_to|回到虚构世界", "source": "战略失败", "target": "回到虚构世界", "kind": "responds_to"}}, {"data": {"id": "进度停滞|responds_to|回到虚构世界", "source": "进度停滞", "target": "回到虚构世界", "kind": "responds_to"}}, {"data": {"id": "AI 变成纯粹执行者|responds_to|刻意引导", "source": "AI 变成纯粹执行者", "target": "刻意引导", "kind": "responds_to"}}, {"data": {"id": "范围失控|responds_to|缩小窗口", "source": "范围失控", "target": "缩小窗口", "kind": "responds_to"}}, {"data": {"id": "不确定是否合规|responds_to|找合规来套", "source": "不确定是否合规", "target": "找合规来套", "kind": "responds_to"}}, {"data": {"id": "自己不想看自己写的内容|responds_to|修剪上下文", "source": "自己不想看自己写的内容", "target": "修剪上下文", "kind": "responds_to"}}, {"data": {"id": "高压与喘息|responds_to|补觉与放手", "source": "高压与喘息", "target": "补觉与放手", "kind": "responds_to"}}, {"data": {"id": "规模焦虑|responds_to|缩小窗口", "source": "规模焦虑", "target": "缩小窗口", "kind": "responds_to"}}, {"data": {"id": "规模焦虑|responds_to|去建设平台", "source": "规模焦虑", "target": "去建设平台", "kind": "responds_to"}}, {"data": {"id": "失控与重新掌控|responds_to|刻意引导", "source": "失控与重新掌控", "target": "刻意引导", "kind": "responds_to"}}, {"data": {"id": "疏离|responds_to|修剪上下文", "source": "疏离", "target": "修剪上下文", "kind": "responds_to"}}, {"data": {"id": "厌倦与熟练|responds_to|从依赖个人到依赖规则", "source": "厌倦与熟练", "target": "从依赖个人到依赖规则", "kind": "responds_to"}}, {"data": {"id": "疏离感的封闭|responds_to|修剪上下文", "source": "疏离感的封闭", "target": "修剪上下文", "kind": "responds_to"}}, {"data": {"id": "信心的底色|responds_to|回到虚构世界", "source": "信心的底色", "target": "回到虚构世界", "kind": "responds_to"}}, {"data": {"id": "非商业化与商业化切开|serves|与自己保持连接", "source": "非商业化与商业化切开", "target": "与自己保持连接", "kind": "serves"}}, {"data": {"id": "客户视角重组|serves|解决实际问题优于精英社交", "source": "客户视角重组", "target": "解决实际问题优于精英社交", "kind": "serves"}}, {"data": {"id": "用现有项目做阶梯|serves|积累感", "source": "用现有项目做阶梯", "target": "积累感", "kind": "serves"}}, {"data": {"id": "缩小窗口|serves|积累感", "source": "缩小窗口", "target": "积累感", "kind": "serves"}}, {"data": {"id": "找合规来套|serves|合规是刚性边界", "source": "找合规来套", "target": "合规是刚性边界", "kind": "serves"}}, {"data": {"id": "交给标准化|serves|标准化才配走公司流程", "source": "交给标准化", "target": "标准化才配走公司流程", "kind": "serves"}}, {"data": {"id": "修剪上下文|serves|与自己保持连接", "source": "修剪上下文", "target": "与自己保持连接", "kind": "serves"}}, {"data": {"id": "回到虚构世界|serves|与自己保持连接", "source": "回到虚构世界", "target": "与自己保持连接", "kind": "serves"}}, {"data": {"id": "装进框架|serves|解决实际问题优于精英社交", "source": "装进框架", "target": "解决实际问题优于精英社交", "kind": "serves"}}, {"data": {"id": "量潮经济体视角|serves|积累感", "source": "量潮经济体视角", "target": "积累感", "kind": "serves"}}, {"data": {"id": "从实验室到平台|serves|积累感", "source": "从实验室到平台", "target": "积累感", "kind": "serves"}}, {"data": {"id": "私有数据驱动的创作实验|manifests|与自己保持连接", "source": "私有数据驱动的创作实验", "target": "与自己保持连接", "kind": "manifests"}}, {"data": {"id": "存稿不求工程质量|manifests|与自己保持连接", "source": "存稿不求工程质量", "target": "与自己保持连接", "kind": "manifests"}}, {"data": {"id": "三本小说的同构倾向|manifests|与自己保持连接", "source": "三本小说的同构倾向", "target": "与自己保持连接", "kind": "manifests"}}, {"data": {"id": "标准化才配走公司流程|excludes|个人化表达硬塞进组织流程", "source": "标准化才配走公司流程", "target": "个人化表达硬塞进组织流程", "kind": "excludes"}}, {"data": {"id": "带人必须有商业收益|excludes|无收益的一对一投入", "source": "带人必须有商业收益", "target": "无收益的一对一投入", "kind": "excludes"}}, {"data": {"id": "积累感|excludes|消耗型活动", "source": "积累感", "target": "消耗型活动", "kind": "excludes"}}, {"data": {"id": "解决实际问题优于精英社交|excludes|消耗型活动", "source": "解决实际问题优于精英社交", "target": "消耗型活动", "kind": "excludes"}}, {"data": {"id": "利用人性恶赚钱不能长久|excludes|消耗型活动", "source": "利用人性恶赚钱不能长久", "target": "消耗型活动", "kind": "excludes"}}, {"data": {"id": "与自己保持连接|excludes|消耗型活动", "source": "与自己保持连接", "target": "消耗型活动", "kind": "excludes"}}]}
+</script>
+<script>
+const DATA = JSON.parse(document.getElementById('data').textContent);
+const KIND_CN = {trigger:'触发点',emotion:'情绪',method:'方法',expression:'表达',value:'价值',anti:'排除形态'};
+const MORPH_CN = {evokes:'触发 evokes',responds_to:'应对 responds_to',serves:'服务 serves',excludes:'排除 excludes',manifests:'外显 manifests'};
+const ORDER = ['trigger','emotion','method','expression','value','anti'];
+const COL = {}; ORDER.forEach(k=>COL[k]=getComputedStyle(document.documentElement).getPropertyValue('--'+k).trim()||'#888');
+
+const nodes = DATA.nodes.map(n=>Object.assign({},n.data));
+const edges = DATA.edges.map(e=>Object.assign({},e.data));
+const byId = {}; nodes.forEach(n=>byId[n.id]=n);
+
+// ---- 按 kind 分层布局：6 列 × 每列纵向铺开 ----
+const colX = {}; ORDER.forEach((k,i)=>colX[k]= 90 + i*175);
+const groups = {}; ORDER.forEach(k=>groups[k]=[]);
+nodes.forEach(n=>groups[n.kind].push(n));
+const H = Math.max(...ORDER.map(k=>groups[k].length))*78 + 80;
+ORDER.forEach(k=>{
+  const arr = groups[k];
+  arr.forEach((n,i)=>{
+    n.x = colX[k];
+    n.y = (H - arr.length*78)/2 + i*78 + 40;
+  });
+});
+
+// 手工微调：让 trigger 层与其 emotion 目标对齐更自然（按 evokes 顺序排）
+const ev = {}; edges.filter(e=>e.kind==='evokes').forEach(e=>{ (ev[e.target]=ev[e.target]||[]).push(e.source); });
+
+const svg = document.getElementById('svg'), vp = document.getElementById('viewport');
+document.getElementById('viewport').parentElement.style.height = H+'px';
+
+function edgePath(a,b){
+  const dx=b.x-a.x, dy=b.y-a.y, d=Math.hypot(dx,dy)||1;
+  const r=16, sx=a.x+dx/d*r, sy=a.y+dy/d*r, tx=b.x-dx/d*(r+6), ty=b.y-dy/d*(r+6);
+  const mx=(sx+tx)/2, my=(sy+ty)/2 - Math.abs(dy)*0.12;
+  return {d:`M${sx},${sy} Q${mx},${my} ${tx},${ty}`, mx, my};
+}
+
+function render(){
+  const eg = document.getElementById('edges'), ng = document.getElementById('nodes');
+  eg.innerHTML=''; ng.innerHTML='';
+  edges.forEach(e=>{
+    const a=byId[e.source], b=byId[e.target]; if(!a||!b) return;
+    const p=edgePath(a,b);
+    const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d',p.d); path.setAttribute('class','edge'); path.dataset.id=e.id;
+    eg.appendChild(path); e._el=path;
+    const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',p.mx); t.setAttribute('y',p.my-3); t.setAttribute('text-anchor','middle');
+    t.setAttribute('class','elen'); t.textContent=e.kind; eg.appendChild(t); e._lab=t;
+  });
+  nodes.forEach(n=>{
+    const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.setAttribute('class','node'); g.dataset.id=n.id;
+    g.setAttribute('transform',`translate(${n.x},${n.y})`);
+    const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('r',13); c.setAttribute('fill',n.color||COL[n.kind]||'#888');
+    const label = n.id.length>9 ? n.id.slice(0,8)+'…' : n.id;
+    const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('y',27); t.setAttribute('text-anchor','middle'); t.textContent=label;
+    g.appendChild(c); g.appendChild(t); ng.appendChild(g);
+    g.addEventListener('click',()=>select(n.id));
+    n._el=g;
+  });
+}
+render();
+
+// ---- 缩放平移 ----
+let vb = {x:0,y:0,w:1100,h:H};
+function apply(){ svg.setAttribute('viewBox',`${vb.x} ${vb.y} ${vb.w} ${vb.h}`); }
+svg.setAttribute('viewBox',`0 0 1100 ${H}`); vb={x:0,y:0,w:1100,h:H};
+svg.addEventListener('wheel',ev=>{
+  ev.preventDefault();
+  const rect=svg.getBoundingClientRect();
+  const mx=vb.x + (ev.clientX-rect.left)/rect.width*vb.w;
+  const my=vb.y + (ev.clientY-rect.top)/rect.height*vb.h;
+  const f = ev.deltaY<0 ? 0.9 : 1.1;
+  vb.w*=f; vb.h*=f;
+  vb.x = mx-(mx-vb.x)*f; vb.y = my-(my-vb.y)*f;
+  apply();
+},{passive:false});
+let drag=null;
+svg.addEventListener('mousedown',e=>{drag={x:e.clientX,y:e.clientY,vx:vb.x,vy:vb.y};svg.classList.add('grabbing')});
+window.addEventListener('mousemove',e=>{
+  if(!drag) return;
+  const rect=svg.getBoundingClientRect();
+  vb.x = drag.vx-(e.clientX-drag.x)/rect.width*vb.w;
+  vb.y = drag.vy-(e.clientY-drag.y)/rect.height*vb.h;
+  apply();
+});
+window.addEventListener('mouseup',()=>{drag=null;svg.classList.remove('grabbing')});
+
+// ---- 侧栏列表 ----
+function buildList(filter=''){
+  const box=document.getElementById('list'); box.innerHTML='';
+  ORDER.forEach(k=>{
+    const items = groups[k].filter(n=>!filter||n.id.includes(filter));
+    if(!items.length) return;
+    const h=document.createElement('div'); h.className='grp';
+    h.textContent=`${KIND_CN[k]} ${k} · ${items.length}`; box.appendChild(h);
+    items.forEach(n=>{
+      const d=document.createElement('div'); d.className='item'; d.dataset.id=n.id;
+      const dot=document.createElement('div'); dot.className='dot'; dot.style.background=COL[k]||'#888';
+      const nm=document.createElement('div'); nm.className='nm'; nm.textContent=n.id;
+      const num=document.createElement('div'); num.className='num';
+      const o=edges.filter(e=>e.source===n.id).length, i=edges.filter(e=>e.target===n.id).length;
+      num.textContent = (o||i) ? `${o}→ ${i}←` : '孤立';
+      d.appendChild(dot); d.appendChild(nm); d.appendChild(num);
+      d.addEventListener('click',()=>select(n.id));
+      box.appendChild(d);
+    });
+  });
+  if(!box.children.length) box.innerHTML='<div class="empty" style="padding:12px">无匹配对象</div>';
+}
+buildList();
+document.getElementById('q').addEventListener('input',e=>buildList(e.target.value.trim()));
+document.getElementById('meta').textContent =
+  `${DATA.meta.title} · ${nodes.length} 对象 / ${edges.length} 关系 · ${DATA.meta.source||''}`;
+document.getElementById('legend').innerHTML = ORDER.map(k=>
+  `<div><span class="dot" style="background:${COL[k]}"></span>${KIND_CN[k]} <span style="color:#8b93a7">×${DATA.kinds[k]||0}</span></div>`).join('');
+
+// ---- 选择与推理展示 ----
+function select(id){
+  const n=byId[id]; if(!n) return;
+  nodes.forEach(x=>{x._el.classList.remove('sel'); x._el.classList.remove('hi');});
+  edges.forEach(e=>{e._el.classList.remove('on'); e._el.classList.remove('faded'); e._lab.classList.remove('on');});
+  n._el.classList.add('sel');
+  document.querySelectorAll('.item').forEach(el=>el.classList.toggle('sel',el.dataset.id===id));
+
+  const outs=edges.filter(e=>e.source===id), ins=edges.filter(e=>e.target===id);
+  outs.forEach(e=>{e._el.classList.add('on'); e._lab.style.fill='#ffd43b'; const t=byId[e.target]; if(t)t._el.classList.add('hi')});
+  ins.forEach(e=>{e._el.classList.add('on'); e._lab.style.fill='#ffd43b'; const s=byId[e.source]; if(s)s._el.classList.add('hi')});
+  edges.forEach(e=>{ if(!outs.includes(e)&&!ins.includes(e)){e._el.classList.add('faded'); e._lab.style.opacity=0.15;}});
+  edges.forEach(e=>{ if(outs.includes(e)||ins.includes(e)) e._lab.style.opacity=1;});
+
+  const qs = [
+    `cmap out "${id}"`,
+    `cmap in "${id}"`,
+    `cmap chain "${id}"`,
+  ];
+  const p=document.getElementById('panel');
+  p.innerHTML = `<h2>${id}</h2>
+    <span class="tag" style="background:${COL[n.kind]}">${KIND_CN[n.kind]} · ${n.kind}</span>
+    ${n.group?`<span class="tag" style="background:#495057;margin-left:6px">${n.group}</span>`:''}
+    ${n.note?`<div class="empty" style="margin-top:8px">注：${n.note}</div>`:''}
+    <div class="empty" style="margin-top:6px">源文件 ${n.file}</div>
+    <div class="kv"><div class="k">正向 out（${outs.length}）</div>
+      ${outs.length?outs.map(e=>`<div class="row">-${e.kind}→ <b>${e.target}</b></div>`).join(''):'<div class="empty">（无出边）</div>'}</div>
+    <div class="kv"><div class="k">反向 in（${ins.length}）</div>
+      ${ins.length?ins.map(e=>`<div class="row"><b>${e.source}</b> -${e.kind}→</div>`).join(''):'<div class="empty">（无入边）</div>'}</div>
+    <div class="kv"><div class="k">试运行</div><div id="trybox"></div></div>`;
+  const tb = p.querySelector('#trybox');
+  qs.forEach(q=>{
+    const b=document.createElement('div'); b.className='q'; b.textContent=q;
+    b.addEventListener('click',()=>{ if(typeof sendPrompt==='function') sendPrompt(q); });
+    tb.appendChild(b);
+  });
+}
+</script>
+</body>
+</html>

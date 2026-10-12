@@ -10,11 +10,11 @@
 
 ## 它读写的两样东西
 
-**日志**在 `quanttide-founder/assets/memory/`。当天写的直接放在记忆集根部（如 `default/2026-10-05.md`），更早的平铺在 `default/journal/2026-09-27.md`。一篇日志里话题转换处用 `---` 分隔，一段就是一个语义单元。
+**日志**在 `quanttide-founder/assets/context/`。当天写的直接放在记忆集根部（如 `default/2026-10-05.md`），更早的平铺在 `default/journal/2026-09-27.md`。一篇日志里话题转换处用 `---` 分隔，一段就是一个语义单元。
 
-**档案**在同一仓库的 `assets/memory/default/profile/` 下，五轴：`emotions`（情绪）、`values`（价值观）、`triggers`（触发点）、`methods`（方法论）、`expressions`（表达）。档案是从全部日志里蒸馏出的稳定特征，只描述特征、不给建议。
+**档案**在同一仓库的 `assets/context/default/profile/` 下，五轴：`emotions`（情绪）、`values`（价值观）、`triggers`（触发点）、`methods`（方法论）、`expressions`（表达）。档案是从全部日志里蒸馏出的稳定特征，只描述特征、不给建议。
 
-现有的四道蒸馏都是**正向**的——日志产出档案、路线图、洞察、意图（规则在 `assets/memory/.agents/skills/journal-to-*`）。本案例是**反向**的那一道。
+现有的四道蒸馏都是**正向**的——日志产出档案、路线图、洞察、意图（规则在 `assets/context/.agents/skills/journal-to-*`）。本案例是**反向**的那一道。
 
 ## 一个例子
 

@@ -11,7 +11,7 @@
 | 规格 | `docs/` | 方法论、流程与规则，是持久的沉淀物 |
 | 素材 | `docs/ideas/` | 想法与语料（agent / work / write），结构化是演进方向；程序的中间 JSON 落各案例自己的 `data/` |
 | 复用 | `examples/core/` | 跨案例复用的模块：切段（`segmentation.py`）与两臂检索（`retrieval.py`），改它等于改所有用它的案例 |
-| 代码 | `examples/` | 轻量脚本，快更迭的验证载体，按需重建与废弃 |
+| 代码 | `examples/`、`src/` | `examples/` 是轻量脚本，快更迭的验证载体；`src/` 是独立应用骨架（`cli/` 与 `studio/`），结构参考 qtfounder |
 
 ## 目录结构
 
@@ -29,6 +29,9 @@ examples/
     src/          代码（planner / searcher / task_board）
     data/         中间数据（JSON：段清单、金标、两臂结果、任务扫描）
     tests/        固定测试（unittest，不依赖图形界面）
+src/
+  cli/            CLI 脚手架（Rust，qtlab）
+  studio/         工作台骨架（Flutter，qtlab_studio）
 ```
 
 ## 当前状态
@@ -38,6 +41,7 @@ examples/
 - 固定测试 `python3 -m unittest discover -s examples/novel-planner/tests`：锁定切段、规则与看板读写行为，改代码前先跑
 - 任务发现规则：`docs/ideas/write/task-discovery.md`；写作规则：`docs/ideas/write/writing-rules.md`；流程：`docs/ideas/write/creation-log-workflow.md`
 - 双库生成控制（实验中）：风格规则库 + 情节账本，生成前注入、生成后回流，验证 H1–H4；规格与旋钮见 `examples/novel-planner/docs/dual-library.md`，骨架护栏在 `examples/novel-planner/src/dual_library.py`
+- 独立应用骨架：`src/cli`（Rust 脚手架，`qtlab`）与 `src/studio`（Flutter 骨架，`qtlab_studio`），结构参考 qtfounder；当前只含入口与冒烟测试
 
 ## 工作方式
 

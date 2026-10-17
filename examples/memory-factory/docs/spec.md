@@ -69,7 +69,7 @@
 
 ## 复用
 
-分块与两臂检索不重新实现：用实验室 `src/segmentation.py`（切段）与 `src/retrieval.py`（bm25 / embed 两臂），即 `novel-planner` 已在用的那套。
+分块与两臂检索不重新实现：用实验室 `examples/core/segmentation.py`（切段）与 `examples/core/retrieval.py`（bm25 / embed 两臂），即 `novel-planner` 已在用的那套。
 
 ## 图谱一致性校验（2026-10-08）
 

@@ -5,7 +5,7 @@
 
 一、范围：只判 assets/memory/default/ 的段（load_segments 后按 path 前缀
     memory/default/ 过滤，应为 62 段），不碰 fiction / work —— 同一记忆集内闭环。
-二、分块：直接用实验室 ../../src/segmentation.py 的 load_segments，不自己切段。
+二、分块：直接用实验室 ../../core/segmentation.py 的 load_segments，不自己切段。
 三、条目：profile 五轴各篇的 `## ` 小节（子条目 `### ` 归属所在 `##`），条目全文给模型，
     不另建副本。
 四、判定：每块一次 OpenAI 兼容 chat/completions 调用，语言模型答判断链两问——
@@ -52,7 +52,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent              # memory-factory/src
 LAB = HERE.parents[2]                               # quanttide-founder-lab
-sys.path.insert(0, str(LAB / "src"))
+sys.path.insert(0, str(LAB / "examples" / "core"))
 
 from segmentation import load_segments  # noqa: E402
 

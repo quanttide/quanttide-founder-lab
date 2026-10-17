@@ -24,7 +24,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent          # memory-factory/src
 LAB = HERE.parents[2]                            # quanttide-founder-lab
-sys.path.insert(0, str(LAB / "src"))
+sys.path.insert(0, str(LAB / "examples" / "core"))
 
 from segmentation import load_segments  # noqa: E402
 

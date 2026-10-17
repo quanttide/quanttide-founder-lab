@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """检索引擎：从 memory 原始日志段里为加工中的创作素材捞出相关片段。
 
-切段与两臂打分已抽到实验室 `src/`（segmentation.py / retrieval.py），本文件只留本案例的
+切段与两臂打分已抽到实验室 `examples/core/`（segmentation.py / retrieval.py），本文件只留本案例的
 实验编排（评分器、报告、run_emotion）。口径与 novel-planner 第二轮一致，预注册不回调参。
 
 中间数据一律 JSON，程序不读写文档。实验设计与结果见 docs/experiment.md。
@@ -14,9 +14,9 @@ import sys
 from pathlib import Path
 
 # 实验室复用模块
-_LAB_SRC = Path(__file__).resolve().parents[3] / "src"
-if str(_LAB_SRC) not in sys.path:
-    sys.path.insert(0, str(_LAB_SRC))
+_LAB_CORE = Path(__file__).resolve().parents[3] / "examples" / "core"
+if str(_LAB_CORE) not in sys.path:
+    sys.path.insert(0, str(_LAB_CORE))
 
 from segmentation import *  # noqa: F401,F403  （切段：Doc/Unit/Segment/load_* /build_units）
 from retrieval import *  # noqa: F401,F403  （两臂：Bm25/Embedder/tokenize/相关集）

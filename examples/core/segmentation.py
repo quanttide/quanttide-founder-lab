@@ -1,6 +1,6 @@
 """切段：把记忆仓库的 Markdown 日志切成语义单元。
 
-原本住在 novel-planner 的 searcher.py，抽到实验室 src/ 供各案例复用。
+原本住在 novel-planner 的 searcher.py，抽到实验室 examples/core/ 供各案例复用。
 单元坐标 `path#index` + `line_start-line_end` + `date`，口径与 novel-planner 第二轮一致。
 """
 

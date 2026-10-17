@@ -1,6 +1,6 @@
 """检索：词法与语义两臂打分，以及相关性集合的读写。
 
-原本住在 novel-planner 的 searcher.py，抽到实验室 src/ 供各案例复用。
+原本住在 novel-planner 的 searcher.py，抽到实验室 examples/core/ 供各案例复用。
 bm25 离线词法臂 + 分块嵌入臂（480 字窗口、重叠 80 字，取分块对最大相似度）。
 """
 

@@ -10,13 +10,12 @@
 |----|------|------|
 | 规格 | `docs/` | 方法论、流程与规则，是持久的沉淀物 |
 | 素材 | `docs/ideas/` | 想法与语料（agent / work / write），结构化是演进方向；程序的中间 JSON 落各案例自己的 `data/` |
-| 复用 | `src/` | 跨案例复用的模块：切段（`segmentation.py`）与两臂检索（`retrieval.py`），改它等于改所有用它的案例 |
+| 复用 | `examples/core/` | 跨案例复用的模块：切段（`segmentation.py`）与两臂检索（`retrieval.py`），改它等于改所有用它的案例 |
 | 代码 | `examples/` | 轻量脚本，快更迭的验证载体，按需重建与废弃 |
 
 ## 目录结构
 
 ```
-src/         跨案例复用模块（segmentation / retrieval）
 docs/
   dev-guide/ 标注工作流等工具说明
   ideas/
@@ -24,6 +23,7 @@ docs/
     agent/   情绪结构化推演实例
     work/    工作方式语料
 examples/
+  core/           跨案例复用模块（segmentation / retrieval）
   memory-factory/ 记忆工厂（规格阶段：反向蒸馏，档案回扫日志）
   novel-planner/  小说策划助手（联想检索 + 任务评审看板，export/merge 与 Label Studio 往返）
     src/          代码（planner / searcher / task_board）

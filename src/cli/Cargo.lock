@@ -126,7 +126,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "qtlab-cli"
+name = "qtfounder-cli-lab"
 version = "0.1.0"
 dependencies = [
  "clap",

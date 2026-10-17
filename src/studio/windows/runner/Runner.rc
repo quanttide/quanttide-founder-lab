@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.quanttide" "\0"
-            VALUE "FileDescription", "qtlab_studio" "\0"
+            VALUE "FileDescription", "qtfounder_studio_lab" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "qtlab_studio" "\0"
+            VALUE "InternalName", "qtfounder_studio_lab" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 com.quanttide. All rights reserved." "\0"
-            VALUE "OriginalFilename", "qtlab_studio.exe" "\0"
-            VALUE "ProductName", "qtlab_studio" "\0"
+            VALUE "OriginalFilename", "qtfounder_studio_lab.exe" "\0"
+            VALUE "ProductName", "qtfounder_studio_lab" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

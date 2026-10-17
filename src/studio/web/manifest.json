@@ -1,6 +1,6 @@
 {
-    "name": "qtlab_studio",
-    "short_name": "qtlab_studio",
+    "name": "qtfounder_studio_lab",
+    "short_name": "qtfounder_studio_lab",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

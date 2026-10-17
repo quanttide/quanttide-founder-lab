@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="qtlab_studio"
+        android:label="qtfounder_studio_lab"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

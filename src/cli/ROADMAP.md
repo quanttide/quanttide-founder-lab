@@ -1,6 +1,6 @@
 # ROADMAP
 
-量潮创始人实验室 CLI（qtlab-cli）。
+量潮创始人实验室 CLI（qtfounder-cli-lab）。
 
 ## 目标
 

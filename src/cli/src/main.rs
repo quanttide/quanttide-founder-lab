@@ -1,4 +1,4 @@
-//! qtlab-cli：量潮创始人实验室 CLI。
+//! qtfounder-cli-lab：量潮创始人实验室 CLI。
 //!
 //! 当前为脚手架：入口与结构保留，功能待添加。参考 qtfounder 的 `src/cli`。
 //!
@@ -10,7 +10,7 @@
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
-#[command(name = "qtlab", about = "量潮创始人实验室 CLI")]
+#[command(name = "qtfounder-cli-lab", about = "量潮创始人实验室 CLI")]
 struct Cli {
     #[command(subcommand)]
     command: Option<CliCommand>,
@@ -24,7 +24,7 @@ fn main() {
     match Cli::parse().command {
         Some(cmd) => match cmd {},
         None => {
-            println!("qtlab：暂无子命令。");
+            println!("qtfounder-cli-lab：暂无子命令。");
             println!("新功能在 src/ 下新增模块，并在 CliCommand 注册。");
         }
     }

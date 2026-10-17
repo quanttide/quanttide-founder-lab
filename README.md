@@ -29,6 +29,7 @@ examples/
     src/          代码（planner / searcher / task_board）
     data/         中间数据（JSON：段清单、金标、两臂结果、任务扫描）
     tests/        固定测试（unittest，不依赖图形界面）
+scripts/     跨仓库核对脚本（如 think 守恒）
 ```
 
 ## 当前状态

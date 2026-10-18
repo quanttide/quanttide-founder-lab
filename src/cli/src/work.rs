@@ -274,11 +274,16 @@ fn input_from_stdin(flag_task: Option<String>) -> Result<ClarifyInput, AppError>
         Some(task) => Some(task),
         None => optional_text(&value, "task")?,
     };
+    let before = required_text(&value, "before")?;
+    let actual = required_text(&value, "actual")?;
+    // `prompt` 可省略：省略时按两问拼模板，避免调用方（模型）自己编话术
+    let prompt =
+        optional_text(&value, "prompt")?.unwrap_or_else(|| template_prompt(&before, &actual));
     Ok(ClarifyInput {
         task,
-        before: required_text(&value, "before")?,
-        actual: required_text(&value, "actual")?,
-        prompt: required_text(&value, "prompt")?,
+        before,
+        actual,
+        prompt,
     })
 }
 

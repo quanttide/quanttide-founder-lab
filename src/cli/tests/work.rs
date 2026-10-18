@@ -465,6 +465,24 @@ fn clarify_stdin_attaches_without_task() {
 }
 
 #[test]
+fn clarify_stdin_prompt_omitted_builds_template() {
+    let dir = lab();
+    let out = cmd(&dir)
+        .args(["work", "clarify", "--stdin", "--json"])
+        .write_stdin(
+            r#"{"task":"省略 prompt 的事","before":"它知道我要结论","actual":"写了三页铺陈"}"#,
+        )
+        .output()
+        .unwrap();
+    assert!(out.status.success(), "{}", stderr_of(&out));
+    let value: serde_json::Value = serde_json::from_slice(&out.stdout).unwrap();
+    let prompt = value["prompt"].as_str().unwrap();
+    assert!(prompt.contains("它知道我要结论"), "{prompt}");
+    assert!(prompt.contains("写了三页铺陈"), "{prompt}");
+    assert!(prompt.contains("请按我原以为的重做一遍"), "{prompt}");
+}
+
+#[test]
 fn clarify_stdin_missing_field_exits_2() {
     let dir = lab();
     let out = cmd(&dir)

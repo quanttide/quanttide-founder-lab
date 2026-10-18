@@ -48,7 +48,7 @@ echo '{"task":"给这段代码写单元测试","before":"它知道项目用 pyte
 | `task` | 否 | 省略则挂到最近一次意图；不给且没有可挂的意图时报错 |
 | `before` | 是 | 我原以为它知道 / 会做什么 |
 | `actual` | 是 | 它实际做了什么（归类键） |
-| `prompt` | 是 | 可直接粘回对话的一段话 |
+| `prompt` | 否 | 可直接粘回对话的一段话；省略或空文本时按两问拼模板 |
 
 字段缺失或空文本都报 `缺少字段 <名>`；值不是文本报 `字段 <名> 必须是文本`；`--task` 与 JSON 里的 `task` 同时给时以 `--task` 为准。
 
@@ -103,7 +103,7 @@ qtfounder-lab work clarify --rule "先结论后细节，除非我明确要展开
 
 | 情况 | 退出码 | 输出 |
 |------|--------|------|
-| 缺必填字段（`before` / `actual` / `prompt`，空文本同） | 2 | `{"error":{"code":"USAGE","message":"缺少字段 actual"}}` |
+| 缺必填字段（`before` / `actual`，空文本同） | 2 | `{"error":{"code":"USAGE","message":"缺少字段 actual"}}` |
 | 字段值不是文本 | 2 | `{"error":{"code":"USAGE","message":"字段 actual 必须是文本"}}` |
 | `--task` 与 `--rule` 同时给 | 2 | `{"error":{"code":"USAGE","message":"--task 与 --rule 不能同时使用"}}` |
 | `--stdin` 的 JSON 解析失败 | 2 | `{"error":{"code":"USAGE","message":"JSON 解析失败：第 1 行"}}` |

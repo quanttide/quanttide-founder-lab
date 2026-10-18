@@ -85,10 +85,17 @@ cargo test --offline                                 ✅ 32 passed（tests/work.
 
 「禁止」条款限定不改 `src/cli/` 与 `docs/user-guide/` 之外的文件，但「文档」条款点名更新 `docs/dev-guide/clarify-intent.md`。按点名指令更新了 dev-guide（仅「存储」与「落地顺序」两节 + 新增「实现落点」），其余目录（`docs/index.md`、`docs/ideas/`、`docs/design-note/`、`examples/`）一律未动。
 
+## 收尾追加（Hermes 验收时改）
+
+- `--stdin` 的 `prompt` 改为可省略（省略或空文本按两问拼模板）：调用方（模型/agent）不该自己编话术，模板由工具出。新增用例 `clarify_stdin_prompt_omitted_builds_template`，`cargo test --offline` 现为 33 例；`docs/api-references/clarify.md` 的字段表与错误表同步。
+- `.gitignore` 恢复 `target/`（交付版本把 `target/` 换成了 `data/`，等于让构建产物进索引）。
+- 缺子命令的提示改为 `缺少子命令：intent 或 clarify`（clap 该错走 `DisplayHelpOnMissingArgumentOrSubcommand`，交付版本输出的是变体文档注释）。
+- `clarify_default_data_dir_under_cwd` 加 `env_remove("QTFOUNDER_LAB_DATA")`，外部导出该变量时不再假红。
+
 ## 没做的事
 
 - HTTP 四路径与 server + SQLite（dev-guide 落地顺序的后续步骤）；本轮只做 CLI。
-- skill 里写死 `clarify` 命令与两周指标（prompt 粘回率、规则点头率）。
+- 两周指标（prompt 粘回率、规则点头率）：skill 已写在创始人仓 `.agents/skills/clarify-intent/`，指标待跑两周后填。
 - `docs/index.md` 登记新用户文档（该文件不在允许改动范围）。
 - 任何 git 操作（任务禁止：未 add/commit/push/status）。
 - 向量检索、多用户、同步、MCP 适配（设计文档「第一版不做」）。

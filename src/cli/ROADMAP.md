@@ -1,6 +1,6 @@
 # ROADMAP
 
-量潮创始人实验室 CLI（qtfounder-cli-lab）。
+量潮创始人实验室 CLI（包名 `qtfounder-cli-lab`，命令 `qtfounder-lab`，与正式版 `qtfounder` 区分）。
 
 ## 目标
 

@@ -1,1 +1,4 @@
+# 构建产物
 target/
+# 本地运行数据（clarify.json / rules.md）
+data/

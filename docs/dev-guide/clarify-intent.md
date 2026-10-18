@@ -66,10 +66,52 @@ qtfounder-lab work clarify --rule "先结论后细节，除非我明确要展开
 | POST | `/work/clarify` | `clarify` |
 | POST | `/work/clarify/rules` | `clarify --rule` |
 
+## 实现落点（实验室版，已落地）
+
+| 文件 | 职责 |
+|------|------|
+| `src/cli/src/main.rs` | clap derive 定义（`work <intent\|clarify>`）、错误 JSON、退出码三档 |
+| `src/cli/src/store.rs` | 单文件 JSON 存储、id/时间生成、归一化与去重键、rules.md 追加 |
+| `src/cli/src/work.rs` | 两个入口的行为：列表/详情、交互两问、--stdin、去重、立规则 |
+| `src/cli/tests/work.rs` | 集成测试（assert_cmd + tempfile），覆盖表见 `src/cli/REPORT.md` |
+
+门禁（只对本 crate，全绿才算完）：
+
+```bash
+cargo fmt --check
+cargo clippy --all-targets --offline -- -D warnings
+cargo test --offline
+```
+
+实际输出样式：
+
+```text
+$ qtfounder-lab work intent
+int_1SAZ  给这段代码写单元测试  3 次澄清
+  候选：先讲了两大段背景才给答案  ×2
+
+$ qtfounder-lab work clarify          # 交互：逐行问两问，模板提示词当场生成
+你原本以为它知道 / 会做什么？
+> <你的答案>
+它实际做了什么？
+> <你的答案>
+
+我原以为「…」。
+它实际做了「…」。
+请按我原以为的重做一遍，把这两条当约束。
+
+已记入 int_1SAZ / clr_VTAV
+
+$ qtfounder-lab work clarify --rule "先结论后细节，除非我明确要展开"
+已追加规则到 data/rules.md
+- 先结论后细节，除非我明确要展开
+已处理 2 条重复差：clr_VTAV, clr_9S2V
+```
+
 ## 落地顺序
 
 1. 先定 HTTP 契约（上面四个路径）；
-2. server + SQLite 起一版，跑通「澄清一次 → 看意图 → 候选浮出 → 立规则」一条链；
+2. server + SQLite 起一版，跑通「澄清一次 → 看意图 → 候选浮出 → 立规则」一条链（CLI 版已用单文件 JSON 跑通同一条链，不等 server）；
 3. CLI 做薄客户端，`--json` 直接透传；
 4. skill 里写死 `clarify` 这一条命令，跑两周，看两个数：prompt 粘回率、规则点头率。
 
@@ -77,4 +119,6 @@ qtfounder-lab work clarify --rule "先结论后细节，除非我明确要展开
 
 ## 存储
 
-初版按 server 侧 SQLite 单库设计，intent 与澄清记录两张表 + `rules.md`。数据落点是否改为第二大脑 `data/context/<集>/intention/` 的 Markdown，见 roadmap 仓那份的「待决策」。
+当前实现（实验室版 CLI）：单文件 JSON `<数据目录>/clarify.json`，数据目录默认 `data/`，环境变量 `QTFOUNDER_LAB_DATA` 覆盖整个数据目录；规则是同目录 `rules.md` 的一行，哪批重复差已处理作为元数据记在数据文件里。不引 SQLite——离线环境没有 bundled sqlite，单文件 JSON 够这两个入口用；`src/cli/.gitignore` 已忽略 `data/`。
+
+后续 server 侧的两表 + SQLite 方案保持原设计，数据落点是否改为第二大脑 `data/context/<集>/intention/` 的 Markdown，见 roadmap 仓那份的「待决策」。

@@ -743,6 +743,8 @@ fn clarify_default_data_dir_under_cwd() {
     let out = Command::cargo_bin("qtfounder-lab")
         .unwrap()
         .current_dir(dir.path())
+        // 不继承外部环境的 QTFOUNDER_LAB_DATA，否则这条会写到别处
+        .env_remove("QTFOUNDER_LAB_DATA")
         .args(["work", "clarify", "--stdin", "--json"])
         .write_stdin(stdin_json(
             Some("默认数据目录的事"),

@@ -123,6 +123,10 @@ fn exit_with_clap_error(err: clap::Error) -> ! {
             print_error(&AppError::Usage(format!("未知参数 {unknown}")));
             std::process::exit(2);
         }
+        ErrorKind::MissingSubcommand | ErrorKind::DisplayHelpOnMissingArgumentOrSubcommand => {
+            print_error(&AppError::usage("缺少子命令：intent 或 clarify"));
+            std::process::exit(2);
+        }
         _ => {
             let text = err.to_string();
             let message = text.lines().next().unwrap_or("用法错误");

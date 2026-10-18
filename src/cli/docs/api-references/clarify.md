@@ -10,6 +10,7 @@ qtfounder-lab work clarify [--task <一句话>] [--stdin] [--rule <文本>] [--j
 |------|------|------|
 | `--task <一句话>` | 否 | 新开一件事；不给则挂到最近一次意图上 |
 | `--stdin` | 否 | 整条 JSON 从标准输入读入，字段名与 `--json` 输出一致 |
+| `--revise <clr_id>` | 否 | 修正一条已记录的澄清：原地改 `before` / `actual` 并重拼提示词，不新增记录 |
 | `--rule <文本>` | 否 | 把候选固化成一条规则，追加进 `rules.md` |
 | `--json` | 否 | 输出机器可读 JSON |
 
@@ -68,6 +69,31 @@ echo '{"task":"给这段代码写单元测试","before":"它知道项目用 pyte
 
 `--stdin` 前没有意图且 JSON 不含 `task` 时报 `没有可挂的意图，缺少 task`，退出码 2。
 
+## 修正一条记录
+
+记歪了——字段里带了「我以为」这类框架词，或者写错了一行——用 `--revise <clr_id>` 原地改，不新增记录：
+
+```bash
+qtfounder-lab work clarify --revise clr_NHCX --stdin --json <<'JSON'
+{"before":"只改我指定的那一段","actual":"整段重写"}
+JSON
+```
+
+必须配合 `--stdin`。提示词按新的两问重拼，`id`、`at`、所属意图都不变；`--revise` 与 `--task`、`--rule` 互斥——修正不改归属，也不立规则。
+
+**输出**：
+
+```json
+{
+  "id": "clr_NHCX",
+  "intent_id": "int_1Z8G",
+  "at": "2026-10-18T08:39:56Z",
+  "prompt": "我原以为「只改我指定的那一段」。\n它实际做了「整段重写」。\n请按我原以为的重做一遍，把这两条当约束。"
+}
+```
+
+删除不设命令：账本是白箱文件，删整条直接改文件就行，不会牵连提示词自洽（提示词跟着记录走）。
+
 ## 立规则
 
 ```bash
@@ -108,6 +134,9 @@ qtfounder-lab work clarify --rule "先结论后细节，除非我明确要展开
 | `--task` 与 `--rule` 同时给 | 2 | `{"error":{"code":"USAGE","message":"--task 与 --rule 不能同时使用"}}` |
 | `--stdin` 的 JSON 解析失败 | 2 | `{"error":{"code":"USAGE","message":"JSON 解析失败：第 1 行"}}` |
 | `--rule` 文本为空 | 2 | `{"error":{"code":"USAGE","message":"--rule 需要一段文本"}}` |
+| `--revise` 未配合 `--stdin` | 2 | `{"error":{"code":"USAGE","message":"--revise 需要配合 --stdin 给新的 before / actual"}}` |
+| `--revise` 与 `--task` 或 `--rule` 同给 | 2 | `{"error":{"code":"USAGE","message":"--task 与 --revise 不能同时使用"}}` |
+| `--revise` 的记录 id 不存在 | 3 | `{"error":{"code":"NOT_FOUND","message":"clr_XXXX 不存在","hint":"用 qtfounder-lab work intent --id <意图 id> 查看"}}` |
 | 无 `--task` 且没有可挂的意图 | 2 | `{"error":{"code":"USAGE","message":"没有可挂的意图，缺少 task"}}` |
 | 交互中读不到回答（EOF / 空行） | 2 | `{"error":{"code":"USAGE","message":"缺少回答"}}` |
 | 数据目录读写失败（`QTFOUNDER_LAB_DATA` 指向不可写位置等） | 2 | `{"error":{"code":"USAGE","message":"无法读取 <路径>：…"}}` |

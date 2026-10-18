@@ -18,6 +18,7 @@
 | `qtfounder-lab work clarify` | 澄清一次：问「原以为它知道什么 / 它实际做了什么」，给一段可粘回对话的话，挂到最近一件事上 |
 | `qtfounder-lab work clarify --task "<一句话>"` | 新开一件事再澄清 |
 | `qtfounder-lab work clarify --stdin` | 模型用：整条 JSON 走 stdin，字段名与输出一致 |
+| `qtfounder-lab work clarify --revise <clr_id>` | 修正一条已记录的澄清：原地改两问、重拼提示词，不新增记录 |
 | `qtfounder-lab work clarify --rule "<文本>"` | 把重复出现的差固化成一条规则，追加进 `rules.md` |
 
 阶段不是命令。开始前、过程中、结束时都敲同一句 `qtfounder-lab work clarify`，工具按「有没有可挂的事」决定新开还是续记。

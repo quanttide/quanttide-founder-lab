@@ -16,9 +16,10 @@ pub fn run(command: WorkCommand) -> Result<(), AppError> {
         WorkCommand::Clarify {
             task,
             stdin,
+            revise,
             rule,
             json,
-        } => clarify(task, stdin, rule, json),
+        } => clarify(task, stdin, revise, rule, json),
     }
 }
 
@@ -153,6 +154,14 @@ struct RuleOutcome {
     path: String,
 }
 
+#[derive(Serialize)]
+struct ReviseOutcome<'a> {
+    id: &'a str,
+    intent_id: &'a str,
+    at: &'a str,
+    prompt: &'a str,
+}
+
 /// 一次澄清的输入，交互与 `--stdin` 汇到同一个形状。
 struct ClarifyInput {
     task: Option<String>,
@@ -164,6 +173,7 @@ struct ClarifyInput {
 fn clarify(
     task: Option<String>,
     from_stdin: bool,
+    revise: Option<String>,
     rule: Option<String>,
     json: bool,
 ) -> Result<(), AppError> {
@@ -171,12 +181,22 @@ fn clarify(
         if task.is_some() {
             return Err(AppError::usage("--task 与 --rule 不能同时使用"));
         }
+        if revise.is_some() {
+            return Err(AppError::usage("--rule 与 --revise 不能同时使用"));
+        }
         let rule = rule.trim();
         if rule.is_empty() {
             return Err(AppError::usage("--rule 需要一段文本"));
         }
         // `--rule` 与 `--stdin` 同时给时只立规则，不读 stdin。
         return append_rule(rule, json);
+    }
+
+    if let Some(id) = revise {
+        if task.is_some() {
+            return Err(AppError::usage("--task 与 --revise 不能同时使用"));
+        }
+        return revise_record(&id, from_stdin, json);
     }
 
     let mut store = Store::load()?;
@@ -382,6 +402,55 @@ fn optional_text(value: &Value, field: &str) -> Result<Option<String>, AppError>
         Some(Value::String(text)) => Ok(Some(text.trim().to_string())),
         Some(_) => Err(AppError::usage(format!("字段 {field} 必须是文本"))),
     }
+}
+
+/// 修正一条已记录的澄清：原地改 before / actual 并重拼提示词，不新增记录。
+fn revise_record(id: &str, from_stdin: bool, json: bool) -> Result<(), AppError> {
+    if !from_stdin {
+        return Err(AppError::usage(
+            "--revise 需要配合 --stdin 给新的 before / actual",
+        ));
+    }
+    let mut store = Store::load()?;
+    let input = input_from_stdin(None)?;
+
+    let mut intent_id: Option<String> = None;
+    for intent in store.intents.iter_mut() {
+        if let Some(cl) = intent.clarifications.iter_mut().find(|cl| cl.id == id) {
+            cl.before = input.before;
+            cl.actual = input.actual;
+            cl.prompt = input.prompt;
+            intent_id = Some(intent.id.clone());
+            break;
+        }
+    }
+    let intent_id = intent_id.ok_or_else(|| AppError::NotFound {
+        message: format!("{id} 不存在"),
+        hint: "用 qtfounder-lab work intent --id <意图 id> 查看".to_string(),
+    })?;
+    store.save()?;
+
+    let record = store
+        .intents
+        .iter()
+        .find(|intent| intent.id == intent_id)
+        .and_then(|intent| intent.clarifications.iter().find(|cl| cl.id == id))
+        .expect("刚修正的记录必定存在");
+
+    if json {
+        let outcome = ReviseOutcome {
+            id: &record.id,
+            intent_id: &intent_id,
+            at: &record.at,
+            prompt: &record.prompt,
+        };
+        println!("{}", to_pretty(&outcome)?);
+    } else {
+        println!("已修正 {}", record.id);
+        println!();
+        println!("{}", record.prompt);
+    }
+    Ok(())
 }
 
 /// 立规则：追加进 rules.md，并把重复的差标为已处理。

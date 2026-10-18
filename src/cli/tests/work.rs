@@ -753,6 +753,83 @@ fn clarify_rule_empty_text_exits_2() {
     assert_eq!(err["error"]["message"], "--rule 需要一段文本");
 }
 
+#[test]
+fn clarify_revise_rewrites_record_and_prompt() {
+    let dir = lab();
+    let out = cmd(&dir)
+        .args(["work", "clarify", "--stdin", "--json"])
+        .write_stdin(stdin_json(
+            Some("修正记录的事"),
+            "我以为它知道我要跑得起来的代码",
+            "给了五段解释",
+            "",
+        ))
+        .output()
+        .unwrap();
+    assert!(out.status.success(), "{}", stderr_of(&out));
+    let created: serde_json::Value = serde_json::from_slice(&out.stdout).unwrap();
+    let clr_id = created["id"].as_str().unwrap().to_string();
+
+    let out = cmd(&dir)
+        .args(["work", "clarify", "--revise", &clr_id, "--stdin", "--json"])
+        .write_stdin(r#"{"before":"只改我指定的那一段","actual":"整段重写"}"#)
+        .output()
+        .unwrap();
+    assert!(out.status.success(), "{}", stderr_of(&out));
+    let revised: serde_json::Value = serde_json::from_slice(&out.stdout).unwrap();
+    assert_eq!(revised["id"], clr_id.as_str());
+    let prompt = revised["prompt"].as_str().unwrap();
+    assert!(prompt.contains("只改我指定的那一段"), "{prompt}");
+    assert!(prompt.contains("整段重写"), "{prompt}");
+    assert!(!prompt.contains("五段解释"), "提示词应重拼：{prompt}");
+
+    let store = store_json(&dir);
+    let clarifications = store["intents"][0]["clarifications"].as_array().unwrap();
+    assert_eq!(clarifications.len(), 1, "修正不新增记录");
+    assert_eq!(clarifications[0]["actual"], "整段重写");
+    assert_eq!(clarifications[0]["before"], "只改我指定的那一段");
+}
+
+#[test]
+fn clarify_revise_unknown_id_exits_3() {
+    let dir = lab();
+    seed_intent(&dir, "修正记录的事");
+    let out = cmd(&dir)
+        .args(["work", "clarify", "--revise", "clr_XXXX", "--stdin"])
+        .write_stdin(r#"{"before":"只改指定段","actual":"整段重写"}"#)
+        .output()
+        .unwrap();
+    assert_eq!(out.status.code(), Some(3));
+    let err: serde_json::Value = serde_json::from_slice(&out.stderr).unwrap();
+    assert_eq!(err["error"]["code"], "NOT_FOUND");
+}
+
+#[test]
+fn clarify_revise_without_stdin_exits_2() {
+    let dir = lab();
+    seed_intent(&dir, "修正记录的事");
+    let out = cmd(&dir)
+        .args(["work", "clarify", "--revise", "clr_XXXX"])
+        .output()
+        .unwrap();
+    assert_eq!(out.status.code(), Some(2));
+    let err: serde_json::Value = serde_json::from_slice(&out.stderr).unwrap();
+    assert_eq!(err["error"]["code"], "USAGE");
+}
+
+#[test]
+fn clarify_revise_with_task_mutex_exits_2() {
+    let dir = lab();
+    seed_intent(&dir, "修正记录的事");
+    let out = cmd(&dir)
+        .args(["work", "clarify", "--revise", "clr_XXXX", "--task", "x"])
+        .output()
+        .unwrap();
+    assert_eq!(out.status.code(), Some(2));
+    let err: serde_json::Value = serde_json::from_slice(&out.stderr).unwrap();
+    assert_eq!(err["error"]["message"], "--task 与 --revise 不能同时使用");
+}
+
 // ---------- 通用：数据目录、退出码、用法 ----------
 
 #[test]

@@ -78,6 +78,9 @@ pub enum WorkCommand {
         /// 整条 JSON 从标准输入读入，字段名与 --json 输出一致
         #[arg(long)]
         stdin: bool,
+        /// 修正一条已记录的澄清（给记录 id），原地改并重拼提示词
+        #[arg(long)]
+        revise: Option<String>,
         /// 把候选固化成一条规则，追加进 rules.md
         #[arg(long)]
         rule: Option<String>,

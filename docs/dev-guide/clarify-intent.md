@@ -1,6 +1,6 @@
 # 澄清意图命令行
 
-「澄清意图」的命令行与字段约定。实现落在 `apps/qtfounder` 的 `src/cli`；方向层（为什么做、定了什么、没定什么）在 quanttide-roadmap-of-founder 的 `work/clarify-intent.md`，本篇只讲怎么敲、敲完得到什么。
+「澄清意图」的命令行与字段约定。实现落在 `apps/qtfounder` 的 `src/cli`；方向层（为什么做、定了什么、没定什么）在 quanttide-roadmap-of-founder 的 `work/clarify-intent.md`，本篇只讲怎么敲、敲完得到什么。逐参数的接口契约（入参、JSON 出入、错误码）见 `src/cli/docs/api-references/`。
 
 两个入口：名词 `qtfounder work intent` 看意图，动词 `qtfounder work clarify` 澄清一次。
 

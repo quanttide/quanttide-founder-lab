@@ -1,6 +1,6 @@
 # 澄清与意图：怎么用
 
-`qtfounder-lab work clarify` 记录一次「AI 不对劲」，`qtfounder-lab work intent` 看这些记录攒出了什么。这条命令不分阶段：开始前、卡住时、结束后敲的是同一句，工具按「有没有可挂的事」决定新开一件还是续记。
+`qtfounder-lab code clarify` 记录一次「AI 不对劲」，`qtfounder-lab code intent` 看这些记录攒出了什么。这条命令不分阶段：开始前、卡住时、结束后敲的是同一句，工具按「有没有可挂的事」决定新开一件还是续记。
 
 > `>` 后面是你要敲进去的答案，回车提交。答得笼统（比如「它就是不行」）会被追问一次「举它刚才那句话或那个动作」——概括是情绪，不是信息。
 
@@ -19,7 +19,7 @@
 新起一件事，连着回答两问：
 
 ```bash
-qtfounder-lab work clarify --task "给这段代码写单元测试"
+qtfounder-lab code clarify --task "给这段代码写单元测试"
 ```
 
 ```text
@@ -42,7 +42,7 @@ qtfounder-lab work clarify --task "给这段代码写单元测试"
 同一件事还在做，直接再敲一次，它挂到最近一件事上，不问任务：
 
 ```bash
-qtfounder-lab work clarify
+qtfounder-lab code clarify
 ```
 
 ```text
@@ -63,7 +63,7 @@ qtfounder-lab work clarify
 ## 结束后：看攒出了什么
 
 ```bash
-qtfounder-lab work intent
+qtfounder-lab code intent
 ```
 
 ```text
@@ -76,7 +76,7 @@ int_1SAZ  给这段代码写单元测试  3 次澄清
 看某件事的全部记录：
 
 ```bash
-qtfounder-lab work intent --id int_1SAZ
+qtfounder-lab code intent --id int_1SAZ
 ```
 
 ```text
@@ -96,8 +96,8 @@ int_1SAZ  给这段代码写单元测试  2026-10-18T08:12:42Z
 加 `--json` 换成机器可读输出（脚本、模型用）：
 
 ```bash
-qtfounder-lab work intent --json
-qtfounder-lab work intent --id int_1SAZ --json
+qtfounder-lab code intent --json
+qtfounder-lab code intent --id int_1SAZ --json
 ```
 
 ## 规则怎么长出来
@@ -105,7 +105,7 @@ qtfounder-lab work intent --id int_1SAZ --json
 一个毛病犯两次 → 成为候选 → 你点头挑一条写成规则，工具把它追加进 `rules.md`：
 
 ```bash
-qtfounder-lab work clarify --rule "先结论后细节，除非我明确要展开"
+qtfounder-lab code clarify --rule "先结论后细节，除非我明确要展开"
 ```
 
 ```text
@@ -127,7 +127,7 @@ qtfounder-lab work clarify --rule "先结论后细节，除非我明确要展开
 
 ```bash
 echo '{"task":"把日志里的观察站段落切出来","before":"它知道只切段落不加解释","actual":"整段照搬没切分","prompt":"按段落切开重发"}' \
-  | qtfounder-lab work clarify --stdin --json
+  | qtfounder-lab code clarify --stdin --json
 ```
 
 ```json
@@ -157,7 +157,7 @@ echo '{"task":"把日志里的观察站段落切出来","before":"它知道只�
 字段里带了「我以为」「实际是」这类框架词，或者某一行写错了，别手改文件——用 `--revise` 指着那条记录原地改，提示词会跟着重拼：
 
 ```bash
-qtfounder-lab work clarify --revise clr_NHCX --stdin <<'JSON'
+qtfounder-lab code clarify --revise clr_NHCX --stdin <<'JSON'
 {"before":"只改我指定的那一段","actual":"整段重写"}
 JSON
 ```
@@ -170,15 +170,15 @@ JSON
 请按我原以为的重做一遍，把这两条当约束。
 ```
 
-记录编号（`clr_` 开头那个）在 `work intent --id <意图>` 里能看到。删记录不设命令，直接删文件里那一段即可。
+记录编号（`clr_` 开头那个）在 `code intent --id <意图>` 里能看到。删记录不设命令，直接删文件里那一段即可。
 
 ## 出错时看什么
 
 错误一律是 JSON、写在 stderr，退出码三档：`0` 成功（含去重），`2` 用法错（参数缺失、互斥、类型不对），`3` 没找到（`--id` 指向的事不存在）。
 
 ```bash
-$ qtfounder-lab work intent --id int_没有  # 退出码 3
-{"error":{"code":"NOT_FOUND","message":"int_没有 不存在","hint":"用 qtfounder-lab work intent 查看"}}
+$ qtfounder-lab code intent --id int_没有  # 退出码 3
+{"error":{"code":"NOT_FOUND","message":"int_没有 不存在","hint":"用 qtfounder-lab code intent 查看"}}
 ```
 
 常见用法错：`--stdin` 少了 `before`/`actual`/`prompt`、`--task` 和 `--rule` 同时给、`--rule` 文本为空。逐参数的完整契约见 [接口参考](../../src/cli/docs/api-references/index.md)。

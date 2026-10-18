@@ -6,10 +6,10 @@
 
 | 入口 | 形态 | 用途 | 详细 |
 |------|------|------|------|
-| `qtfounder-lab work intent` | 名词 | 看有哪些意图、哪些差重复了 | [intent.md](intent.md) |
-| `qtfounder-lab work clarify` | 动词 | 澄清一次，产出一段能粘回对话的话 | [clarify.md](clarify.md) |
+| `qtfounder-lab code intent` | 名词 | 看有哪些意图、哪些差重复了 | [intent.md](intent.md) |
+| `qtfounder-lab code clarify` | 动词 | 澄清一次，产出一段能粘回对话的话 | [clarify.md](clarify.md) |
 
-> 实验室版的命令是 `qtfounder-lab`，与正式版 `qtfounder`（`apps/qtfounder/src/cli`）区分。在 `src/cli/` 下用 `cargo run --` 等价于这条命令，例如 `cargo run -- work clarify`。
+> 实验室版的命令是 `qtfounder-lab`，与正式版 `qtfounder`（`apps/qtfounder/src/cli`）区分。在 `src/cli/` 下用 `cargo run --` 等价于这条命令，例如 `cargo run -- code clarify`。
 
 ## 通用约定
 
@@ -22,7 +22,7 @@
 **错误一律 JSON，写 stderr**：
 
 ```json
-{"error":{"code":"NOT_FOUND","message":"int_01J9 不存在","hint":"用 qtfounder-lab work intent 查看"}}
+{"error":{"code":"NOT_FOUND","message":"int_01J9 不存在","hint":"用 qtfounder-lab code intent 查看"}}
 ```
 
 **退出码三档**：

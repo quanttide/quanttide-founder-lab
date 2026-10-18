@@ -1,4 +1,4 @@
-//! `work intent` / `work clarify` 集成测试：每条命令、每个 flag、每条错误路径。
+//! `code intent` / `code clarify` 集成测试：每条命令、每个 flag、每条错误路径。
 //!
 //! 数据目录一律指向 tempfile（`QTFOUNDER_LAB_DATA`），不污染仓库 `data/`。
 
@@ -56,7 +56,7 @@ fn assert_key_order(json: &str, keys: &[&str]) {
 /// 用 --stdin 立一件事 + 一条澄清，返回 intent id。
 fn seed_intent(dir: &TempDir, task: &str) -> String {
     let out = cmd(dir)
-        .args(["work", "clarify", "--stdin", "--json"])
+        .args(["code", "clarify", "--stdin", "--json"])
         .write_stdin(stdin_json(
             Some(task),
             "它知道我只要三行结论",
@@ -76,7 +76,7 @@ fn seed_intent(dir: &TempDir, task: &str) -> String {
 fn intent_list_json_empty() {
     let dir = lab();
     let out = cmd(&dir)
-        .args(["work", "intent", "--json"])
+        .args(["code", "intent", "--json"])
         .output()
         .unwrap();
     assert!(out.status.success());
@@ -87,7 +87,7 @@ fn intent_list_json_empty() {
 #[test]
 fn intent_list_human_empty() {
     let dir = lab();
-    let out = cmd(&dir).args(["work", "intent"]).output().unwrap();
+    let out = cmd(&dir).args(["code", "intent"]).output().unwrap();
     assert!(out.status.success());
     assert!(stdout_of(&out).contains("暂无意图"));
 }
@@ -98,7 +98,7 @@ fn intent_list_json_counts_and_candidates() {
     // 同一件事里：两条归一化后相同的差 + 一条不同的差
     let task = "给这段代码写单元测试";
     cmd(&dir)
-        .args(["work", "clarify", "--stdin", "--json"])
+        .args(["code", "clarify", "--stdin", "--json"])
         .write_stdin(stdin_json(
             Some(task),
             "它知道项目用 pytest",
@@ -108,7 +108,7 @@ fn intent_list_json_counts_and_candidates() {
         .assert()
         .success();
     cmd(&dir)
-        .args(["work", "clarify", "--stdin", "--json"])
+        .args(["code", "clarify", "--stdin", "--json"])
         .write_stdin(stdin_json(
             None,
             "它知道 fixture 在 conftest",
@@ -118,7 +118,7 @@ fn intent_list_json_counts_and_candidates() {
         .assert()
         .success();
     cmd(&dir)
-        .args(["work", "clarify", "--stdin", "--json"])
+        .args(["code", "clarify", "--stdin", "--json"])
         .write_stdin(stdin_json(
             None,
             "它知道我要先看结论",
@@ -129,7 +129,7 @@ fn intent_list_json_counts_and_candidates() {
         .success();
 
     let out = cmd(&dir)
-        .args(["work", "intent", "--json"])
+        .args(["code", "intent", "--json"])
         .output()
         .unwrap();
     assert!(out.status.success());
@@ -166,7 +166,7 @@ fn intent_list_human_with_candidates() {
         .enumerate()
     {
         cmd(&dir)
-            .args(["work", "clarify", "--stdin"])
+            .args(["code", "clarify", "--stdin"])
             .write_stdin(stdin_json(
                 if i == 0 { Some(task) } else { None },
                 before,
@@ -176,7 +176,7 @@ fn intent_list_human_with_candidates() {
             .assert()
             .success();
     }
-    let out = cmd(&dir).args(["work", "intent"]).output().unwrap();
+    let out = cmd(&dir).args(["code", "intent"]).output().unwrap();
     assert!(out.status.success());
     let text = stdout_of(&out);
     assert!(text.contains(task), "输出应含任务：{text}");
@@ -197,7 +197,7 @@ fn intent_detail_json() {
     let intent_id = seed_intent(&dir, task);
 
     let out = cmd(&dir)
-        .args(["work", "intent", "--id", &intent_id, "--json"])
+        .args(["code", "intent", "--id", &intent_id, "--json"])
         .output()
         .unwrap();
     assert!(out.status.success());
@@ -225,7 +225,7 @@ fn intent_detail_human() {
     let dir = lab();
     let intent_id = seed_intent(&dir, "给这段代码写单元测试");
     let out = cmd(&dir)
-        .args(["work", "intent", "--id", &intent_id])
+        .args(["code", "intent", "--id", &intent_id])
         .output()
         .unwrap();
     assert!(out.status.success());
@@ -242,7 +242,7 @@ fn intent_detail_human() {
 fn intent_id_not_found_exits_3() {
     let dir = lab();
     let out = cmd(&dir)
-        .args(["work", "intent", "--id", "int_ZZZZ", "--json"])
+        .args(["code", "intent", "--id", "int_ZZZZ", "--json"])
         .output()
         .unwrap();
     assert_eq!(out.status.code(), Some(3));
@@ -250,14 +250,14 @@ fn intent_id_not_found_exits_3() {
     let err: serde_json::Value = serde_json::from_slice(&out.stderr).expect("错误应是 JSON");
     assert_eq!(err["error"]["code"], "NOT_FOUND");
     assert_eq!(err["error"]["message"], "int_ZZZZ 不存在");
-    assert_eq!(err["error"]["hint"], "用 qtfounder-lab work intent 查看");
+    assert_eq!(err["error"]["hint"], "用 qtfounder-lab code intent 查看");
 }
 
 #[test]
 fn intent_unknown_flag_exits_2() {
     let dir = lab();
     let out = cmd(&dir)
-        .args(["work", "intent", "--foo"])
+        .args(["code", "intent", "--foo"])
         .output()
         .unwrap();
     assert_eq!(out.status.code(), Some(2));
@@ -270,7 +270,7 @@ fn intent_unknown_flag_exits_2() {
 #[test]
 fn intent_id_without_value_exits_2() {
     let dir = lab();
-    let out = cmd(&dir).args(["work", "intent", "--id"]).output().unwrap();
+    let out = cmd(&dir).args(["code", "intent", "--id"]).output().unwrap();
     assert_eq!(out.status.code(), Some(2));
     let err: serde_json::Value = serde_json::from_slice(&out.stderr).unwrap();
     assert_eq!(err["error"]["code"], "USAGE");
@@ -283,7 +283,7 @@ fn intent_id_without_value_exits_2() {
 fn clarify_interactive_opens_first_task() {
     let dir = lab();
     let out = cmd(&dir)
-        .args(["work", "clarify"])
+        .args(["code", "clarify"])
         .write_stdin(
             "给这段代码写单元测试\n它知道项目用 pytest，fixture 在 conftest\n给了五段解释加伪代码\n",
         )
@@ -310,7 +310,7 @@ fn clarify_interactive_attaches_recent_without_task_prompt() {
     let intent_id = seed_intent(&dir, "给这段代码写单元测试");
 
     let out = cmd(&dir)
-        .args(["work", "clarify"])
+        .args(["code", "clarify"])
         .write_stdin("它知道我要能直接跑的代码\n这次给了三段解释加伪代码\n")
         .output()
         .unwrap();
@@ -324,7 +324,7 @@ fn clarify_interactive_attaches_recent_without_task_prompt() {
 fn clarify_interactive_reasks_vague_answer() {
     let dir = lab();
     let out = cmd(&dir)
-        .args(["work", "clarify"])
+        .args(["code", "clarify"])
         .write_stdin(
             "第一件事先立起来\n它就是不行\n它把表格贴成了截图，我要可复制的文本\n给了整段客套话\n",
         )
@@ -343,7 +343,7 @@ fn clarify_interactive_reasks_vague_answer() {
 fn clarify_interactive_eof_exits_2() {
     let dir = lab();
     let out = cmd(&dir)
-        .args(["work", "clarify"])
+        .args(["code", "clarify"])
         .write_stdin("")
         .output()
         .unwrap();
@@ -361,7 +361,7 @@ fn clarify_task_opens_new_intent() {
     seed_intent(&dir, "给这段代码写单元测试");
 
     let out = cmd(&dir)
-        .args(["work", "clarify", "--task", "把日志里的观察站段落切出来"])
+        .args(["code", "clarify", "--task", "把日志里的观察站段落切出来"])
         .write_stdin("它知道只切段不要解释\n整段照搬没有切分\n按段落切开重发\n")
         .output()
         .unwrap();
@@ -385,7 +385,7 @@ fn clarify_task_json_flag_wins_over_stdin_task() {
     let dir = lab();
     let out = cmd(&dir)
         .args([
-            "work",
+            "code",
             "clarify",
             "--task",
             "flag 开的事",
@@ -411,7 +411,7 @@ fn clarify_task_json_flag_wins_over_stdin_task() {
 fn clarify_stdin_json_full() {
     let dir = lab();
     let out = cmd(&dir)
-        .args(["work", "clarify", "--stdin", "--json"])
+        .args(["code", "clarify", "--stdin", "--json"])
         .write_stdin(stdin_json(
             Some("给这段代码写单元测试"),
             "它知道项目用 pytest、fixture 在 conftest",
@@ -449,7 +449,7 @@ fn clarify_stdin_attaches_without_task() {
     let intent_id = seed_intent(&dir, "给这段代码写单元测试");
 
     let out = cmd(&dir)
-        .args(["work", "clarify", "--stdin", "--json"])
+        .args(["code", "clarify", "--stdin", "--json"])
         .write_stdin(stdin_json(
             None,
             "它知道我要结论",
@@ -468,7 +468,7 @@ fn clarify_stdin_attaches_without_task() {
 fn clarify_stdin_prompt_omitted_builds_template() {
     let dir = lab();
     let out = cmd(&dir)
-        .args(["work", "clarify", "--stdin", "--json"])
+        .args(["code", "clarify", "--stdin", "--json"])
         .write_stdin(
             r#"{"task":"省略 prompt 的事","before":"它知道我要结论","actual":"写了三页铺陈"}"#,
         )
@@ -486,7 +486,7 @@ fn clarify_stdin_prompt_omitted_builds_template() {
 fn clarify_stdin_missing_field_exits_2() {
     let dir = lab();
     let out = cmd(&dir)
-        .args(["work", "clarify", "--stdin", "--json"])
+        .args(["code", "clarify", "--stdin", "--json"])
         .write_stdin(r#"{"task":"x","before":"它知道我要结论","prompt":"先给结论"}"#)
         .output()
         .unwrap();
@@ -501,7 +501,7 @@ fn clarify_stdin_missing_field_exits_2() {
 fn clarify_stdin_empty_text_field_exits_2() {
     let dir = lab();
     let out = cmd(&dir)
-        .args(["work", "clarify", "--stdin"])
+        .args(["code", "clarify", "--stdin"])
         .write_stdin(stdin_json(Some("x"), "它知道我要结论", "   ", "先给结论"))
         .output()
         .unwrap();
@@ -514,7 +514,7 @@ fn clarify_stdin_empty_text_field_exits_2() {
 fn clarify_stdin_bad_json_exits_2() {
     let dir = lab();
     let out = cmd(&dir)
-        .args(["work", "clarify", "--stdin"])
+        .args(["code", "clarify", "--stdin"])
         .write_stdin(r#"{"before":"它知道我要结论","actual":"#)
         .output()
         .unwrap();
@@ -535,7 +535,7 @@ fn clarify_stdin_bad_json_exits_2() {
 fn clarify_stdin_wrong_type_exits_2() {
     let dir = lab();
     let out = cmd(&dir)
-        .args(["work", "clarify", "--stdin"])
+        .args(["code", "clarify", "--stdin"])
         .write_stdin(r#"{"before":"它知道我要结论","actual":42,"prompt":"先给结论"}"#)
         .output()
         .unwrap();
@@ -548,7 +548,7 @@ fn clarify_stdin_wrong_type_exits_2() {
 fn clarify_stdin_without_task_and_no_intent_exits_2() {
     let dir = lab();
     let out = cmd(&dir)
-        .args(["work", "clarify", "--stdin"])
+        .args(["code", "clarify", "--stdin"])
         .write_stdin(stdin_json(
             None,
             "它知道我要结论",
@@ -576,7 +576,7 @@ fn clarify_dedup_is_idempotent() {
     );
 
     let first = cmd(&dir)
-        .args(["work", "clarify", "--stdin", "--json"])
+        .args(["code", "clarify", "--stdin", "--json"])
         .write_stdin(payload.clone())
         .output()
         .unwrap();
@@ -586,7 +586,7 @@ fn clarify_dedup_is_idempotent() {
 
     // 同一条重复提交：不新增，deduplicated=true，退出码 0
     let second = cmd(&dir)
-        .args(["work", "clarify", "--stdin", "--json"])
+        .args(["code", "clarify", "--stdin", "--json"])
         .write_stdin(payload)
         .output()
         .unwrap();
@@ -618,12 +618,12 @@ fn clarify_dedup_human_output() {
         "先给结论",
     );
     cmd(&dir)
-        .args(["work", "clarify", "--stdin"])
+        .args(["code", "clarify", "--stdin"])
         .write_stdin(payload.clone())
         .assert()
         .success();
     let out = cmd(&dir)
-        .args(["work", "clarify", "--stdin"])
+        .args(["code", "clarify", "--stdin"])
         .write_stdin(payload)
         .output()
         .unwrap();
@@ -639,7 +639,7 @@ fn clarify_dedup_human_output() {
 fn seed_duplicate(dir: &TempDir) {
     for (i, before) in ["它知道我要结论", "它知道要三行以内"].iter().enumerate() {
         cmd(dir)
-            .args(["work", "clarify", "--stdin"])
+            .args(["code", "clarify", "--stdin"])
             .write_stdin(stdin_json(
                 if i == 0 { Some("第一件事") } else { None },
                 before,
@@ -658,7 +658,7 @@ fn clarify_rule_appends_human() {
 
     let out = cmd(&dir)
         .args([
-            "work",
+            "code",
             "clarify",
             "--rule",
             "先结论后细节，除非我明确要展开",
@@ -690,7 +690,7 @@ fn clarify_rule_json_and_source_only_unprocessed() {
     seed_duplicate(&dir);
 
     let first = cmd(&dir)
-        .args(["work", "clarify", "--rule", "先结论后细节", "--json"])
+        .args(["code", "clarify", "--rule", "先结论后细节", "--json"])
         .output()
         .unwrap();
     assert!(first.status.success());
@@ -711,7 +711,7 @@ fn clarify_rule_json_and_source_only_unprocessed() {
 
     // 第二次立规则：重复差已处理，source 为空
     let second = cmd(&dir)
-        .args(["work", "clarify", "--rule", "追问再展开", "--json"])
+        .args(["code", "clarify", "--rule", "追问再展开", "--json"])
         .output()
         .unwrap();
     assert!(second.status.success());
@@ -731,7 +731,7 @@ fn clarify_rule_json_and_source_only_unprocessed() {
 fn clarify_task_and_rule_mutex_exits_2() {
     let dir = lab();
     let out = cmd(&dir)
-        .args(["work", "clarify", "--task", "x", "--rule", "y"])
+        .args(["code", "clarify", "--task", "x", "--rule", "y"])
         .output()
         .unwrap();
     assert_eq!(out.status.code(), Some(2));
@@ -744,7 +744,7 @@ fn clarify_task_and_rule_mutex_exits_2() {
 fn clarify_rule_empty_text_exits_2() {
     let dir = lab();
     let out = cmd(&dir)
-        .args(["work", "clarify", "--rule", ""])
+        .args(["code", "clarify", "--rule", ""])
         .output()
         .unwrap();
     assert_eq!(out.status.code(), Some(2));
@@ -757,7 +757,7 @@ fn clarify_rule_empty_text_exits_2() {
 fn clarify_revise_rewrites_record_and_prompt() {
     let dir = lab();
     let out = cmd(&dir)
-        .args(["work", "clarify", "--stdin", "--json"])
+        .args(["code", "clarify", "--stdin", "--json"])
         .write_stdin(stdin_json(
             Some("修正记录的事"),
             "我以为它知道我要跑得起来的代码",
@@ -771,7 +771,7 @@ fn clarify_revise_rewrites_record_and_prompt() {
     let clr_id = created["id"].as_str().unwrap().to_string();
 
     let out = cmd(&dir)
-        .args(["work", "clarify", "--revise", &clr_id, "--stdin", "--json"])
+        .args(["code", "clarify", "--revise", &clr_id, "--stdin", "--json"])
         .write_stdin(r#"{"before":"只改我指定的那一段","actual":"整段重写"}"#)
         .output()
         .unwrap();
@@ -795,7 +795,7 @@ fn clarify_revise_unknown_id_exits_3() {
     let dir = lab();
     seed_intent(&dir, "修正记录的事");
     let out = cmd(&dir)
-        .args(["work", "clarify", "--revise", "clr_XXXX", "--stdin"])
+        .args(["code", "clarify", "--revise", "clr_XXXX", "--stdin"])
         .write_stdin(r#"{"before":"只改指定段","actual":"整段重写"}"#)
         .output()
         .unwrap();
@@ -809,7 +809,7 @@ fn clarify_revise_without_stdin_exits_2() {
     let dir = lab();
     seed_intent(&dir, "修正记录的事");
     let out = cmd(&dir)
-        .args(["work", "clarify", "--revise", "clr_XXXX"])
+        .args(["code", "clarify", "--revise", "clr_XXXX"])
         .output()
         .unwrap();
     assert_eq!(out.status.code(), Some(2));
@@ -822,7 +822,7 @@ fn clarify_revise_with_task_mutex_exits_2() {
     let dir = lab();
     seed_intent(&dir, "修正记录的事");
     let out = cmd(&dir)
-        .args(["work", "clarify", "--revise", "clr_XXXX", "--task", "x"])
+        .args(["code", "clarify", "--revise", "clr_XXXX", "--task", "x"])
         .output()
         .unwrap();
     assert_eq!(out.status.code(), Some(2));
@@ -840,7 +840,7 @@ fn clarify_default_data_dir_under_cwd() {
         .current_dir(dir.path())
         // 不继承外部环境的 QTFOUNDER_LAB_DATA，否则这条会写到别处
         .env_remove("QTFOUNDER_LAB_DATA")
-        .args(["work", "clarify", "--stdin", "--json"])
+        .args(["code", "clarify", "--stdin", "--json"])
         .write_stdin(stdin_json(
             Some("默认数据目录的事"),
             "它知道我要结论",
@@ -865,7 +865,7 @@ fn clarify_data_dir_io_error_exits_2() {
     let out = Command::cargo_bin("qtfounder-lab")
         .unwrap()
         .env("QTFOUNDER_LAB_DATA", &blocked)
-        .args(["work", "clarify", "--stdin"])
+        .args(["code", "clarify", "--stdin"])
         .write_stdin(stdin_json(
             Some("x"),
             "它知道我要结论",
@@ -880,9 +880,9 @@ fn clarify_data_dir_io_error_exits_2() {
 }
 
 #[test]
-fn work_without_subcommand_exits_2() {
+fn code_without_subcommand_exits_2() {
     let dir = lab();
-    let out = cmd(&dir).arg("work").output().unwrap();
+    let out = cmd(&dir).arg("code").output().unwrap();
     assert_eq!(out.status.code(), Some(2));
     let err: serde_json::Value = serde_json::from_slice(&out.stderr).unwrap();
     assert_eq!(err["error"]["code"], "USAGE");
@@ -893,10 +893,10 @@ fn help_exits_zero() {
     let dir = lab();
     let out = cmd(&dir).arg("--help").output().unwrap();
     assert_eq!(out.status.code(), Some(0));
-    assert!(stdout_of(&out).contains("work"));
+    assert!(stdout_of(&out).contains("code"));
 
     // 子命令帮助里列全两个入口
-    let out = cmd(&dir).args(["work", "--help"]).output().unwrap();
+    let out = cmd(&dir).args(["code", "--help"]).output().unwrap();
     assert_eq!(out.status.code(), Some(0));
     let text = stdout_of(&out);
     assert!(text.contains("intent"), "帮助应列 intent：{text}");

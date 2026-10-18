@@ -1,26 +1,26 @@
 # 澄清意图命令行
 
-「澄清意图」的命令行与字段约定。实现落在 `apps/qtfounder` 的 `src/cli`；方向层（为什么做、定了什么、没定什么）在 quanttide-roadmap-of-founder 的 `work/clarify-intent.md`，本篇只讲怎么敲、敲完得到什么。逐参数的接口契约（入参、JSON 出入、错误码）见 `src/cli/docs/api-references/`。
+「澄清意图」的命令行与字段约定。正式实现落在 `apps/qtfounder` 的 `src/cli`，命令 `qtfounder`；实验室版在 lab 仓 `src/cli/`，命令 `qtfounder-lab`，本篇与接口参考都按实验室版写。方向层（为什么做、定了什么、没定什么）在 quanttide-roadmap-of-founder 的 `work/clarify-intent.md`。逐参数的接口契约（入参、JSON 出入、错误码）见 `src/cli/docs/api-references/`。
 
-两个入口：名词 `qtfounder work intent` 看意图，动词 `qtfounder work clarify` 澄清一次。
+两个入口：名词 `qtfounder-lab work intent` 看意图，动词 `qtfounder-lab work clarify` 澄清一次。
 
 ## 入口一（名词）：intent
 
 | 调用 | 干什么 |
 |------|--------|
-| `qtfounder work intent` | 列出全部意图：任务一句话、澄清次数、重复 ≥2 次的差（规则候选） |
-| `qtfounder work intent --id <id>` | 一件事的详情：它下面的全部澄清记录与提示词 |
+| `qtfounder-lab work intent` | 列出全部意图：任务一句话、澄清次数、重复 ≥2 次的差（规则候选） |
+| `qtfounder-lab work intent --id <id>` | 一件事的详情：它下面的全部澄清记录与提示词 |
 
 ## 入口二（动词）：clarify
 
 | 调用 | 干什么 |
 |------|--------|
-| `qtfounder work clarify` | 澄清一次：问「原以为它知道什么 / 它实际做了什么」，给一段可粘回对话的话，挂到最近一件事上 |
-| `qtfounder work clarify --task "<一句话>"` | 新开一件事再澄清 |
-| `qtfounder work clarify --stdin` | 模型用：整条 JSON 走 stdin，字段名与输出一致 |
-| `qtfounder work clarify --rule "<文本>"` | 把重复出现的差固化成一条规则，追加进 `rules.md` |
+| `qtfounder-lab work clarify` | 澄清一次：问「原以为它知道什么 / 它实际做了什么」，给一段可粘回对话的话，挂到最近一件事上 |
+| `qtfounder-lab work clarify --task "<一句话>"` | 新开一件事再澄清 |
+| `qtfounder-lab work clarify --stdin` | 模型用：整条 JSON 走 stdin，字段名与输出一致 |
+| `qtfounder-lab work clarify --rule "<文本>"` | 把重复出现的差固化成一条规则，追加进 `rules.md` |
 
-阶段不是命令。开始前、过程中、结束时都敲同一句 `qtfounder work clarify`，工具按「有没有可挂的事」决定新开还是续记。
+阶段不是命令。开始前、过程中、结束时都敲同一句 `qtfounder-lab work clarify`，工具按「有没有可挂的事」决定新开还是续记。
 
 ## 字段
 
@@ -34,21 +34,21 @@ intent（一件事）：`task`（一句话，要干什么）、`at`（自动记�
 
 ```bash
 # 人用：进流程，逐问作答，挂到最近一件事上
-qtfounder work clarify
+qtfounder-lab work clarify
 
 # 新开一件事
-qtfounder work clarify --task "给这段代码写单元测试"
+qtfounder-lab work clarify --task "给这段代码写单元测试"
 
 # 模型用：一次给全
 echo '{"task":"给这段代码写单元测试","before":"它知道项目用 pytest、fixture 在 conftest","actual":"给了五段解释加伪代码","prompt":"刚才你的回答偏在铺陈展开……"}' \
-  | qtfounder work clarify --stdin
+  | qtfounder-lab work clarify --stdin
 
 # 看有哪些事、哪些差重复了
-qtfounder work intent
-qtfounder work intent --id int_01J9
+qtfounder-lab work intent
+qtfounder-lab work intent --id int_01J9
 
 # 立规则
-qtfounder work clarify --rule "先结论后细节，除非我明确要展开"
+qtfounder-lab work clarify --rule "先结论后细节，除非我明确要展开"
 ```
 
 `--json` 给机器：字段只增不删，错误也走 JSON、写 stderr。重复提交用 sha256(before + actual) 去重，返回已有记录并标 `deduplicated`，退出码 0——模型重试安全。

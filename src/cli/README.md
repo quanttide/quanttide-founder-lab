@@ -1,6 +1,6 @@
 # qtfounder-cli-lab
 
-量潮创始人实验室 CLI。当前为脚手架：入口与结构保留，功能待添加，参考 qtfounder 的 `src/cli`。
+量潮创始人实验室 CLI（命令名 `qtfounder-lab`，与正式版 `qtfounder` 区分）。当前为脚手架：入口与结构保留，功能待添加，参考 qtfounder 的 `src/cli`。
 
 ## 开发
 

@@ -3,7 +3,7 @@
 澄清一次。唯一的写入路径：记录一次「不对劲」，并当场给出一段能粘回对话的话。
 
 ```text
-qtfounder work clarify [--task <一句话>] [--stdin] [--rule <文本>] [--json]
+qtfounder-lab work clarify [--task <一句话>] [--stdin] [--rule <文本>] [--json]
 ```
 
 | 参数 | 必填 | 说明 |
@@ -20,7 +20,7 @@ qtfounder work clarify [--task <一句话>] [--stdin] [--rule <文本>] [--json]
 **交互（人用）**：
 
 ```text
-$ qtfounder work clarify
+$ qtfounder-lab work clarify
 任务：给这段代码写单元测试            ← 仅在需要新开时问
 你原本以为它知道 / 会做什么？
 > 项目用 pytest，fixture 在 conftest
@@ -40,7 +40,7 @@ $ qtfounder work clarify
 
 ```bash
 echo '{"task":"给这段代码写单元测试","before":"它知道项目用 pytest、fixture 在 conftest","actual":"给了五段解释加伪代码","prompt":"刚才你的回答偏在铺陈展开，我需要的是能直接跑的代码……"}' \
-  | qtfounder work clarify --stdin
+  | qtfounder-lab work clarify --stdin
 ```
 
 | 输入字段 | 必填 | 说明 |
@@ -67,7 +67,7 @@ echo '{"task":"给这段代码写单元测试","before":"它知道项目用 pyte
 ## 立规则
 
 ```bash
-qtfounder work clarify --rule "先结论后细节，除非我明确要展开"
+qtfounder-lab work clarify --rule "先结论后细节，除非我明确要展开"
 ```
 
 规则由用户点头才落库，工具不生成规则文本。命令把这条规则追加进 `rules.md`，并把重复的差标为已处理。

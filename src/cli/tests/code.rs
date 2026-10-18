@@ -3,6 +3,7 @@
 //! 数据目录一律指向 tempfile（`QTFOUNDER_LAB_DATA`），不污染仓库 `data/`。
 
 use std::fs;
+use std::path::PathBuf;
 use std::process::Output;
 
 use assert_cmd::Command;
@@ -833,13 +834,19 @@ fn clarify_revise_with_task_mutex_exits_2() {
 // ---------- 通用：数据目录、退出码、用法 ----------
 
 #[test]
-fn clarify_default_data_dir_under_cwd() {
+fn clarify_default_data_dir_under_package_data_in_dev_build() {
     let dir = TempDir::new().unwrap();
+    let package_data = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("data");
+    let ledger = package_data.join("clarify.json");
+    // 开发构建落代码包内的 data/；测试结束后清掉，避免污染开发者视野
+    let _ = fs::remove_file(&ledger);
+
     let out = Command::cargo_bin("qtfounder-lab")
         .unwrap()
         .current_dir(dir.path())
         // 不继承外部环境的 QTFOUNDER_LAB_DATA，否则这条会写到别处
         .env_remove("QTFOUNDER_LAB_DATA")
+        .env_remove("XDG_DATA_HOME")
         .args(["code", "clarify", "--stdin", "--json"])
         .write_stdin(stdin_json(
             Some("默认数据目录的事"),
@@ -851,9 +858,16 @@ fn clarify_default_data_dir_under_cwd() {
         .unwrap();
     assert!(out.status.success(), "{}", stderr_of(&out));
     assert!(
-        dir.path().join("data").join("clarify.json").is_file(),
-        "不给 QTFOUNDER_LAB_DATA 时应落 ./data/clarify.json"
+        ledger.is_file(),
+        "开发构建应落代码包内的 data/clarify.json，而不是 cwd：{}",
+        ledger.display()
     );
+    assert!(
+        !dir.path().join("data").join("clarify.json").is_file(),
+        "开发构建不该落到 cwd 下"
+    );
+    let _ = fs::remove_file(&ledger);
+    let _ = fs::remove_dir(&package_data); // 只在目录已空时成功，别删开发者的真实数据
 }
 
 #[test]

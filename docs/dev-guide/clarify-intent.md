@@ -120,6 +120,6 @@ $ qtfounder-lab code clarify --rule "先结论后细节，除非我明确要展�
 
 ## 存储
 
-当前实现（实验室版 CLI）：单文件 JSON `<数据目录>/clarify.json`，数据目录默认 `data/`，环境变量 `QTFOUNDER_LAB_DATA` 覆盖整个数据目录；规则是同目录 `rules.md` 的一行，哪批重复差已处理作为元数据记在数据文件里。不引 SQLite——离线环境没有 bundled sqlite，单文件 JSON 够这两个入口用；`src/cli/.gitignore` 已忽略 `data/`。
+当前实现（实验室版 CLI）：单文件 JSON，两个文件——`clarify.json` 是账本、`rules.md` 是规则。数据目录按构建形态选：开发构建（`cargo run` / `cargo test`）落代码包内的 `data/`，开发者直接看；发布构建遵循 XDG，落 `$XDG_DATA_HOME/qtfounder-lab`，未设则 `~/.local/share/qtfounder-lab`；`QTFOUNDER_LAB_DATA` 优先级最高，测试与临时切换用它。不引 SQLite——离线环境没有 bundled sqlite，单文件 JSON 够这两个入口用；`src/cli/.gitignore` 已忽略 `data/`。
 
-后续 server 侧的两表 + SQLite 方案保持原设计，数据落点是否改为第二大脑 `data/context/<集>/intention/` 的 Markdown，见 roadmap 仓那份的「待决策」。
+后续 server 侧的两表 + SQLite 方案保持原设计；数据落点是否改为第二大脑 `data/context/<集>/intention/` 的 Markdown，见 `quanttide-report-of-founder` 的 `code/clarify-intent.md`。

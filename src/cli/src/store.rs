@@ -14,6 +14,8 @@ use crate::AppError;
 
 const DATA_FILE: &str = "clarify.json";
 const RULES_FILE: &str = "rules.md";
+/// XDG 下的应用目录名。
+const APP_DIR: &str = "qtfounder-lab";
 
 /// 一次澄清记录（这次哪里不对）。
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -52,11 +54,36 @@ pub struct Store {
     pub processed_clarifications: Vec<String>,
 }
 
-/// 数据目录：`QTFOUNDER_LAB_DATA` 覆盖整个数据目录，默认 `data/`。
+/// 数据目录：开发构建落代码包内的 `data/`（开发者直接看），发布构建遵循 XDG。
+/// `QTFOUNDER_LAB_DATA` 优先级最高，供测试与临时切换用。
 pub fn data_dir() -> PathBuf {
-    match std::env::var_os("QTFOUNDER_LAB_DATA") {
-        Some(value) if !value.is_empty() => PathBuf::from(value),
-        _ => PathBuf::from("data"),
+    data_dir_from(
+        std::env::var_os("QTFOUNDER_LAB_DATA").map(PathBuf::from),
+        cfg!(debug_assertions),
+        std::env::var_os("XDG_DATA_HOME").map(PathBuf::from),
+        std::env::var_os("HOME").map(PathBuf::from),
+    )
+}
+
+/// 纯函数形式的落点解析，四个入参都显式传入，便于把两条分支都钉住。
+pub fn data_dir_from(
+    override_dir: Option<PathBuf>,
+    dev_build: bool,
+    xdg_data_home: Option<PathBuf>,
+    home: Option<PathBuf>,
+) -> PathBuf {
+    if let Some(overridden) = override_dir.filter(|path| !path.as_os_str().is_empty()) {
+        return overridden;
+    }
+    if dev_build {
+        return PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("data");
+    }
+    if let Some(xdg) = xdg_data_home.filter(|path| !path.as_os_str().is_empty()) {
+        return xdg.join(APP_DIR);
+    }
+    match home.filter(|path| !path.as_os_str().is_empty()) {
+        Some(home) => home.join(".local").join("share").join(APP_DIR),
+        None => PathBuf::from(APP_DIR),
     }
 }
 
@@ -258,4 +285,49 @@ pub fn append_rule_line(rule: &str) -> Result<PathBuf, AppError> {
         .map_err(|err| io_error("写入", &path, err))?;
     writeln!(file, "- {rule}").map_err(|err| io_error("写入", &path, err))?;
     Ok(path)
+}
+
+#[cfg(test)]
+mod data_dir_tests {
+    use super::data_dir_from;
+    use std::path::PathBuf;
+
+    fn p(value: &str) -> Option<PathBuf> {
+        Some(PathBuf::from(value))
+    }
+
+    #[test]
+    fn env_override_wins() {
+        let dir = data_dir_from(p("/tmp/x"), true, p("/xdg"), p("/home/u"));
+        assert_eq!(dir, PathBuf::from("/tmp/x"));
+    }
+
+    #[test]
+    fn dev_build_uses_package_data() {
+        let dir = data_dir_from(None, true, p("/xdg"), p("/home/u"));
+        assert_eq!(dir, PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("data"));
+    }
+
+    #[test]
+    fn release_build_follows_xdg_data_home() {
+        let dir = data_dir_from(None, false, p("/xdg"), p("/home/u"));
+        assert_eq!(dir, PathBuf::from("/xdg/qtfounder-lab"));
+    }
+
+    #[test]
+    fn release_build_falls_back_to_home_local_share() {
+        let dir = data_dir_from(None, false, None, p("/home/u"));
+        assert_eq!(dir, PathBuf::from("/home/u/.local/share/qtfounder-lab"));
+    }
+
+    #[test]
+    fn empty_env_values_are_ignored() {
+        let dir = data_dir_from(
+            Some(PathBuf::new()),
+            false,
+            Some(PathBuf::new()),
+            p("/home/u"),
+        );
+        assert_eq!(dir, PathBuf::from("/home/u/.local/share/qtfounder-lab"));
+    }
 }

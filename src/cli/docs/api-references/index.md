@@ -37,6 +37,8 @@
 
 **幂等**：写入用的去重键是 sha256(before + actual)。重复提交不新增记录，返回已有那条并把 `deduplicated` 置为 true，退出码仍为 0——模型重试是安全的。
 
+**数据落点**：开发构建（`cargo run`、`cargo test`）落**代码包内的 `data/`**（`src/cli/data/`），开发者直接看得到；发布构建遵循 XDG，落 `$XDG_DATA_HOME/qtfounder-lab`（未设则 `~/.local/share/qtfounder-lab`）。`QTFOUNDER_LAB_DATA` 优先级最高，测试与临时切换用它。目录里两个文件：`clarify.json`（账本）、`rules.md`（规则）。
+
 ## 数据形状
 
 两层，没有第三层：

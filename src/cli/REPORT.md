@@ -87,7 +87,8 @@ cargo test --offline                                 ✅ 32 passed（tests/code.
 
 ## 收尾追加（Hermes 验收时改）
 
-- `clarify --revise <clr_id>`：修正一条已记录的澄清（原地改 `before` / `actual`、重拼 `prompt`、不新增记录），必须配合 `--stdin`；与 `--task`、`--rule` 互斥；记录 id 不存在退 3。补 4 例（`clarify_revise_*`），`cargo test --offline` 现为 37 例。起因：写库时把框架词写进字段，只能手改文件，且手改漏掉了 `prompt` 那一份，账本不自洽。
+- 数据落点按构建形态选：开发构建（`cargo run` / `cargo test`）落代码包内 `data/`，发布构建遵循 XDG（`$XDG_DATA_HOME/qtfounder-lab`，未设则 `~/.local/share/qtfounder-lab`），`QTFOUNDER_LAB_DATA` 优先级最高。`data_dir_from` 提成纯函数，四条分支各一例单元测试（`data_dir_tests`）；原 `clarify_default_data_dir_under_cwd` 改为 `clarify_default_data_dir_under_package_data_in_dev_build`，跑完会清掉自己写的账本与空目录。
+- `clarify --revise <clr_id>`：修正一条已记录的澄清（原地改 `before` / `actual`、重拼 `prompt`、不新增记录），必须配合 `--stdin`；与 `--task`、`--rule` 互斥；记录 id 不存在退 3。补 4 例（`clarify_revise_*`）。起因：写库时把框架词写进字段，只能手改文件，且手改漏掉了 `prompt` 那一份，账本不自洽。
 - 删除不设命令：账本是白箱文件，删整条直接改文件即可，不牵连提示词自洽。`intent.at` 与 `clarification.at` 不是冗余——前者是这件事什么时候开的，后者是这条什么时候记的。
 - `--stdin` 的 `prompt` 改为可省略（省略或空文本按两问拼模板）：调用方（模型/agent）不该自己编话术，模板由工具出。新增用例 `clarify_stdin_prompt_omitted_builds_template`，`cargo test --offline` 现为 33 例；`docs/api-references/clarify.md` 的字段表与错误表同步。
 - `.gitignore` 恢复 `target/`（交付版本把 `target/` 换成了 `data/`，等于让构建产物进索引）。

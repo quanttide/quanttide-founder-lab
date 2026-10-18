@@ -185,4 +185,9 @@ $ qtfounder-lab code intent --id int_没有  # 退出码 3
 
 ## 记录存在哪
 
-默认在当前目录 `data/` 下（`clarify.json` 存记录、`rules.md` 存规则）。要换位置，设环境变量 `QTFOUNDER_LAB_DATA` 指向一个目录，整个数据目录（记录 + 规则）都跟着走。
+两个文件：`clarify.json` 存记录，`rules.md` 存规则。位置按你拿到的版本自动选：
+
+- **开发版**（`cargo run` 跑出来的）：就在代码包里的 `src/cli/data/`，开发者随时打开看。
+- **正式版**（`cargo install` 装的）：遵循系统惯例放 `$XDG_DATA_HOME/qtfounder-lab`，没设这个变量就是 `~/.local/share/qtfounder-lab`。
+
+要临时换位置，设环境变量 `QTFOUNDER_LAB_DATA` 指向一个目录，整个数据目录（记录 + 规则）都跟着走——做实验或跑测试才需要。

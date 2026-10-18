@@ -16,4 +16,4 @@ cargo test
 2. `CliCommand` 枚举注册子命令分支
 3. 功能依赖加回 `Cargo.toml`
 
-路线见 [ROADMAP.md](ROADMAP.md)。
+路线见 [ROADMAP.md](ROADMAP.md)，命令行接口（两个入口、入参、JSON 出入、退出码）见 [docs/api-references/](docs/api-references/index.md)。

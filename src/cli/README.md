@@ -21,4 +21,4 @@ cargo test                    # 离线环境用 cargo test --offline
 2. `CliCommand` 枚举注册子命令分支
 3. 功能依赖加回 `Cargo.toml`（只用本地 cargo 缓存已有的，离线加 `--offline`）
 
-路线见 [ROADMAP.md](ROADMAP.md)，命令行接口（两个入口、入参、JSON 出入、退出码）见 [docs/api-references/](docs/api-references/index.md)，实现报告与测试覆盖表见 [REPORT.md](REPORT.md)。
+路线见 [ROADMAP.md](docs/dev-guide/roadmap.md)，命令行接口（两个入口、入参、JSON 出入、退出码）见 [docs/api-references/](docs/api-references/index.md)，实现报告与测试覆盖表见 [REPORT.md](REPORT.md)。

@@ -1,12 +1,12 @@
 # qtfounder-cli-lab
 
-量潮创始人实验室 CLI（命令名 `qtfounder-lab`，与正式版 `qtfounder` 区分），已实现两个入口：名词读的 `code requirement`、动词写的 `code clarify`。
+量潮创始人实验室 CLI（命令名 `qtfounder-lab`，与正式版 `qtfounder` 区分），已实现两个入口：名词读的 `product requirement`、动词写的 `product clarify`。
 
 ## 开发
 
 ```bash
-cargo run -- code clarify     # 交互澄清一次（无子命令时输出帮助）
-cargo run -- code requirement      # 列需求与候选
+cargo run -- product clarify     # 交互澄清一次（无子命令时输出帮助）
+cargo run -- product requirement      # 列需求与候选
 cargo build --release
 cargo test                    # 离线环境用 cargo test --offline
 ```

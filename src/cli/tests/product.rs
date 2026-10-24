@@ -1,4 +1,4 @@
-//! `code requirement` / `code clarify` 集成测试：每条命令、每个 flag、每条错误路径。
+//! `product requirement` / `product clarify` 集成测试：每条命令、每个 flag、每条错误路径。
 //!
 //! 数据目录一律指向 tempfile（`QTFOUNDER_LAB_DATA`），不污染仓库 `data/`。
 
@@ -57,7 +57,7 @@ fn assert_key_order(json: &str, keys: &[&str]) {
 /// 用 --stdin 立一件事 + 一条澄清，返回 requirement id。
 fn seed_requirement(dir: &TempDir, task: &str) -> String {
     let out = cmd(dir)
-        .args(["code", "clarify", "--stdin", "--json"])
+        .args(["product", "clarify", "--stdin", "--json"])
         .write_stdin(stdin_json(
             Some(task),
             "它知道我只要三行结论",
@@ -77,7 +77,7 @@ fn seed_requirement(dir: &TempDir, task: &str) -> String {
 fn requirement_list_json_empty() {
     let dir = lab();
     let out = cmd(&dir)
-        .args(["code", "requirement", "--json"])
+        .args(["product", "requirement", "--json"])
         .output()
         .unwrap();
     assert!(out.status.success());
@@ -88,7 +88,7 @@ fn requirement_list_json_empty() {
 #[test]
 fn requirement_list_human_empty() {
     let dir = lab();
-    let out = cmd(&dir).args(["code", "requirement"]).output().unwrap();
+    let out = cmd(&dir).args(["product", "requirement"]).output().unwrap();
     assert!(out.status.success());
     assert!(stdout_of(&out).contains("暂无需求"));
 }
@@ -99,7 +99,7 @@ fn requirement_list_json_counts_and_candidates() {
     // 同一件事里：两条归一化后相同的差 + 一条不同的差
     let task = "给这段代码写单元测试";
     cmd(&dir)
-        .args(["code", "clarify", "--stdin", "--json"])
+        .args(["product", "clarify", "--stdin", "--json"])
         .write_stdin(stdin_json(
             Some(task),
             "它知道项目用 pytest",
@@ -109,7 +109,7 @@ fn requirement_list_json_counts_and_candidates() {
         .assert()
         .success();
     cmd(&dir)
-        .args(["code", "clarify", "--stdin", "--json"])
+        .args(["product", "clarify", "--stdin", "--json"])
         .write_stdin(stdin_json(
             None,
             "它知道 fixture 在 conftest",
@@ -119,7 +119,7 @@ fn requirement_list_json_counts_and_candidates() {
         .assert()
         .success();
     cmd(&dir)
-        .args(["code", "clarify", "--stdin", "--json"])
+        .args(["product", "clarify", "--stdin", "--json"])
         .write_stdin(stdin_json(
             None,
             "它知道我要先看结论",
@@ -130,7 +130,7 @@ fn requirement_list_json_counts_and_candidates() {
         .success();
 
     let out = cmd(&dir)
-        .args(["code", "requirement", "--json"])
+        .args(["product", "requirement", "--json"])
         .output()
         .unwrap();
     assert!(out.status.success());
@@ -167,7 +167,7 @@ fn requirement_list_human_with_candidates() {
         .enumerate()
     {
         cmd(&dir)
-            .args(["code", "clarify", "--stdin"])
+            .args(["product", "clarify", "--stdin"])
             .write_stdin(stdin_json(
                 if i == 0 { Some(task) } else { None },
                 before,
@@ -177,7 +177,7 @@ fn requirement_list_human_with_candidates() {
             .assert()
             .success();
     }
-    let out = cmd(&dir).args(["code", "requirement"]).output().unwrap();
+    let out = cmd(&dir).args(["product", "requirement"]).output().unwrap();
     assert!(out.status.success());
     let text = stdout_of(&out);
     assert!(text.contains(task), "输出应含任务：{text}");
@@ -198,7 +198,7 @@ fn requirement_detail_json() {
     let requirement_id = seed_requirement(&dir, task);
 
     let out = cmd(&dir)
-        .args(["code", "requirement", "--id", &requirement_id, "--json"])
+        .args(["product", "requirement", "--id", &requirement_id, "--json"])
         .output()
         .unwrap();
     assert!(out.status.success());
@@ -226,7 +226,7 @@ fn requirement_detail_human() {
     let dir = lab();
     let requirement_id = seed_requirement(&dir, "给这段代码写单元测试");
     let out = cmd(&dir)
-        .args(["code", "requirement", "--id", &requirement_id])
+        .args(["product", "requirement", "--id", &requirement_id])
         .output()
         .unwrap();
     assert!(out.status.success());
@@ -243,7 +243,7 @@ fn requirement_detail_human() {
 fn requirement_id_not_found_exits_3() {
     let dir = lab();
     let out = cmd(&dir)
-        .args(["code", "requirement", "--id", "req_ZZZZ", "--json"])
+        .args(["product", "requirement", "--id", "req_ZZZZ", "--json"])
         .output()
         .unwrap();
     assert_eq!(out.status.code(), Some(3));
@@ -251,14 +251,14 @@ fn requirement_id_not_found_exits_3() {
     let err: serde_json::Value = serde_json::from_slice(&out.stderr).expect("错误应是 JSON");
     assert_eq!(err["error"]["code"], "NOT_FOUND");
     assert_eq!(err["error"]["message"], "req_ZZZZ 不存在");
-    assert_eq!(err["error"]["hint"], "用 qtfounder-lab code requirement 查看");
+    assert_eq!(err["error"]["hint"], "用 qtfounder-lab product requirement 查看");
 }
 
 #[test]
 fn requirement_unknown_flag_exits_2() {
     let dir = lab();
     let out = cmd(&dir)
-        .args(["code", "requirement", "--foo"])
+        .args(["product", "requirement", "--foo"])
         .output()
         .unwrap();
     assert_eq!(out.status.code(), Some(2));
@@ -271,7 +271,7 @@ fn requirement_unknown_flag_exits_2() {
 #[test]
 fn requirement_id_without_value_exits_2() {
     let dir = lab();
-    let out = cmd(&dir).args(["code", "requirement", "--id"]).output().unwrap();
+    let out = cmd(&dir).args(["product", "requirement", "--id"]).output().unwrap();
     assert_eq!(out.status.code(), Some(2));
     let err: serde_json::Value = serde_json::from_slice(&out.stderr).unwrap();
     assert_eq!(err["error"]["code"], "USAGE");
@@ -284,7 +284,7 @@ fn requirement_id_without_value_exits_2() {
 fn clarify_interactive_opens_first_task() {
     let dir = lab();
     let out = cmd(&dir)
-        .args(["code", "clarify"])
+        .args(["product", "clarify"])
         .write_stdin(
             "给这段代码写单元测试\n它知道项目用 pytest，fixture 在 conftest\n给了五段解释加伪代码\n",
         )
@@ -311,7 +311,7 @@ fn clarify_interactive_attaches_recent_without_task_prompt() {
     let requirement_id = seed_requirement(&dir, "给这段代码写单元测试");
 
     let out = cmd(&dir)
-        .args(["code", "clarify"])
+        .args(["product", "clarify"])
         .write_stdin("它知道我要能直接跑的代码\n这次给了三段解释加伪代码\n")
         .output()
         .unwrap();
@@ -325,7 +325,7 @@ fn clarify_interactive_attaches_recent_without_task_prompt() {
 fn clarify_interactive_reasks_vague_answer() {
     let dir = lab();
     let out = cmd(&dir)
-        .args(["code", "clarify"])
+        .args(["product", "clarify"])
         .write_stdin(
             "第一件事先立起来\n它就是不行\n它把表格贴成了截图，我要可复制的文本\n给了整段客套话\n",
         )
@@ -344,7 +344,7 @@ fn clarify_interactive_reasks_vague_answer() {
 fn clarify_interactive_eof_exits_2() {
     let dir = lab();
     let out = cmd(&dir)
-        .args(["code", "clarify"])
+        .args(["product", "clarify"])
         .write_stdin("")
         .output()
         .unwrap();
@@ -362,7 +362,7 @@ fn clarify_task_opens_new_requirement() {
     seed_requirement(&dir, "给这段代码写单元测试");
 
     let out = cmd(&dir)
-        .args(["code", "clarify", "--task", "把日志里的观察站段落切出来"])
+        .args(["product", "clarify", "--task", "把日志里的观察站段落切出来"])
         .write_stdin("它知道只切段不要解释\n整段照搬没有切分\n按段落切开重发\n")
         .output()
         .unwrap();
@@ -386,7 +386,7 @@ fn clarify_task_json_flag_wins_over_stdin_task() {
     let dir = lab();
     let out = cmd(&dir)
         .args([
-            "code",
+            "product",
             "clarify",
             "--task",
             "flag 开的事",
@@ -412,7 +412,7 @@ fn clarify_task_json_flag_wins_over_stdin_task() {
 fn clarify_stdin_json_full() {
     let dir = lab();
     let out = cmd(&dir)
-        .args(["code", "clarify", "--stdin", "--json"])
+        .args(["product", "clarify", "--stdin", "--json"])
         .write_stdin(stdin_json(
             Some("给这段代码写单元测试"),
             "它知道项目用 pytest、fixture 在 conftest",
@@ -450,7 +450,7 @@ fn clarify_stdin_attaches_without_task() {
     let requirement_id = seed_requirement(&dir, "给这段代码写单元测试");
 
     let out = cmd(&dir)
-        .args(["code", "clarify", "--stdin", "--json"])
+        .args(["product", "clarify", "--stdin", "--json"])
         .write_stdin(stdin_json(
             None,
             "它知道我要结论",
@@ -469,7 +469,7 @@ fn clarify_stdin_attaches_without_task() {
 fn clarify_stdin_prompt_omitted_builds_template() {
     let dir = lab();
     let out = cmd(&dir)
-        .args(["code", "clarify", "--stdin", "--json"])
+        .args(["product", "clarify", "--stdin", "--json"])
         .write_stdin(
             r#"{"task":"省略 prompt 的事","before":"它知道我要结论","actual":"写了三页铺陈"}"#,
         )
@@ -487,7 +487,7 @@ fn clarify_stdin_prompt_omitted_builds_template() {
 fn clarify_stdin_missing_field_exits_2() {
     let dir = lab();
     let out = cmd(&dir)
-        .args(["code", "clarify", "--stdin", "--json"])
+        .args(["product", "clarify", "--stdin", "--json"])
         .write_stdin(r#"{"task":"x","before":"它知道我要结论","prompt":"先给结论"}"#)
         .output()
         .unwrap();
@@ -502,7 +502,7 @@ fn clarify_stdin_missing_field_exits_2() {
 fn clarify_stdin_empty_text_field_exits_2() {
     let dir = lab();
     let out = cmd(&dir)
-        .args(["code", "clarify", "--stdin"])
+        .args(["product", "clarify", "--stdin"])
         .write_stdin(stdin_json(Some("x"), "它知道我要结论", "   ", "先给结论"))
         .output()
         .unwrap();
@@ -515,7 +515,7 @@ fn clarify_stdin_empty_text_field_exits_2() {
 fn clarify_stdin_bad_json_exits_2() {
     let dir = lab();
     let out = cmd(&dir)
-        .args(["code", "clarify", "--stdin"])
+        .args(["product", "clarify", "--stdin"])
         .write_stdin(r#"{"before":"它知道我要结论","actual":"#)
         .output()
         .unwrap();
@@ -536,7 +536,7 @@ fn clarify_stdin_bad_json_exits_2() {
 fn clarify_stdin_wrong_type_exits_2() {
     let dir = lab();
     let out = cmd(&dir)
-        .args(["code", "clarify", "--stdin"])
+        .args(["product", "clarify", "--stdin"])
         .write_stdin(r#"{"before":"它知道我要结论","actual":42,"prompt":"先给结论"}"#)
         .output()
         .unwrap();
@@ -549,7 +549,7 @@ fn clarify_stdin_wrong_type_exits_2() {
 fn clarify_stdin_without_task_and_no_requirement_exits_2() {
     let dir = lab();
     let out = cmd(&dir)
-        .args(["code", "clarify", "--stdin"])
+        .args(["product", "clarify", "--stdin"])
         .write_stdin(stdin_json(
             None,
             "它知道我要结论",
@@ -577,7 +577,7 @@ fn clarify_dedup_is_idempotent() {
     );
 
     let first = cmd(&dir)
-        .args(["code", "clarify", "--stdin", "--json"])
+        .args(["product", "clarify", "--stdin", "--json"])
         .write_stdin(payload.clone())
         .output()
         .unwrap();
@@ -587,7 +587,7 @@ fn clarify_dedup_is_idempotent() {
 
     // 同一条重复提交：不新增，deduplicated=true，退出码 0
     let second = cmd(&dir)
-        .args(["code", "clarify", "--stdin", "--json"])
+        .args(["product", "clarify", "--stdin", "--json"])
         .write_stdin(payload)
         .output()
         .unwrap();
@@ -619,12 +619,12 @@ fn clarify_dedup_human_output() {
         "先给结论",
     );
     cmd(&dir)
-        .args(["code", "clarify", "--stdin"])
+        .args(["product", "clarify", "--stdin"])
         .write_stdin(payload.clone())
         .assert()
         .success();
     let out = cmd(&dir)
-        .args(["code", "clarify", "--stdin"])
+        .args(["product", "clarify", "--stdin"])
         .write_stdin(payload)
         .output()
         .unwrap();
@@ -640,7 +640,7 @@ fn clarify_dedup_human_output() {
 fn seed_duplicate(dir: &TempDir) {
     for (i, before) in ["它知道我要结论", "它知道要三行以内"].iter().enumerate() {
         cmd(dir)
-            .args(["code", "clarify", "--stdin"])
+            .args(["product", "clarify", "--stdin"])
             .write_stdin(stdin_json(
                 if i == 0 { Some("第一件事") } else { None },
                 before,
@@ -659,7 +659,7 @@ fn clarify_rule_appends_human() {
 
     let out = cmd(&dir)
         .args([
-            "code",
+            "product",
             "clarify",
             "--rule",
             "先结论后细节，除非我明确要展开",
@@ -691,7 +691,7 @@ fn clarify_rule_json_and_source_only_unprocessed() {
     seed_duplicate(&dir);
 
     let first = cmd(&dir)
-        .args(["code", "clarify", "--rule", "先结论后细节", "--json"])
+        .args(["product", "clarify", "--rule", "先结论后细节", "--json"])
         .output()
         .unwrap();
     assert!(first.status.success());
@@ -712,7 +712,7 @@ fn clarify_rule_json_and_source_only_unprocessed() {
 
     // 第二次立规则：重复差已处理，source 为空
     let second = cmd(&dir)
-        .args(["code", "clarify", "--rule", "追问再展开", "--json"])
+        .args(["product", "clarify", "--rule", "追问再展开", "--json"])
         .output()
         .unwrap();
     assert!(second.status.success());
@@ -732,7 +732,7 @@ fn clarify_rule_json_and_source_only_unprocessed() {
 fn clarify_task_and_rule_mutex_exits_2() {
     let dir = lab();
     let out = cmd(&dir)
-        .args(["code", "clarify", "--task", "x", "--rule", "y"])
+        .args(["product", "clarify", "--task", "x", "--rule", "y"])
         .output()
         .unwrap();
     assert_eq!(out.status.code(), Some(2));
@@ -745,7 +745,7 @@ fn clarify_task_and_rule_mutex_exits_2() {
 fn clarify_rule_empty_text_exits_2() {
     let dir = lab();
     let out = cmd(&dir)
-        .args(["code", "clarify", "--rule", ""])
+        .args(["product", "clarify", "--rule", ""])
         .output()
         .unwrap();
     assert_eq!(out.status.code(), Some(2));
@@ -758,7 +758,7 @@ fn clarify_rule_empty_text_exits_2() {
 fn clarify_revise_rewrites_record_and_prompt() {
     let dir = lab();
     let out = cmd(&dir)
-        .args(["code", "clarify", "--stdin", "--json"])
+        .args(["product", "clarify", "--stdin", "--json"])
         .write_stdin(stdin_json(
             Some("修正记录的事"),
             "我以为它知道我要跑得起来的代码",
@@ -772,7 +772,7 @@ fn clarify_revise_rewrites_record_and_prompt() {
     let clr_id = created["id"].as_str().unwrap().to_string();
 
     let out = cmd(&dir)
-        .args(["code", "clarify", "--revise", &clr_id, "--stdin", "--json"])
+        .args(["product", "clarify", "--revise", &clr_id, "--stdin", "--json"])
         .write_stdin(r#"{"before":"只改我指定的那一段","actual":"整段重写"}"#)
         .output()
         .unwrap();
@@ -796,7 +796,7 @@ fn clarify_revise_unknown_id_exits_3() {
     let dir = lab();
     seed_requirement(&dir, "修正记录的事");
     let out = cmd(&dir)
-        .args(["code", "clarify", "--revise", "clr_XXXX", "--stdin"])
+        .args(["product", "clarify", "--revise", "clr_XXXX", "--stdin"])
         .write_stdin(r#"{"before":"只改指定段","actual":"整段重写"}"#)
         .output()
         .unwrap();
@@ -810,7 +810,7 @@ fn clarify_revise_without_stdin_exits_2() {
     let dir = lab();
     seed_requirement(&dir, "修正记录的事");
     let out = cmd(&dir)
-        .args(["code", "clarify", "--revise", "clr_XXXX"])
+        .args(["product", "clarify", "--revise", "clr_XXXX"])
         .output()
         .unwrap();
     assert_eq!(out.status.code(), Some(2));
@@ -823,7 +823,7 @@ fn clarify_revise_with_task_mutex_exits_2() {
     let dir = lab();
     seed_requirement(&dir, "修正记录的事");
     let out = cmd(&dir)
-        .args(["code", "clarify", "--revise", "clr_XXXX", "--task", "x"])
+        .args(["product", "clarify", "--revise", "clr_XXXX", "--task", "x"])
         .output()
         .unwrap();
     assert_eq!(out.status.code(), Some(2));
@@ -847,7 +847,7 @@ fn clarify_default_data_dir_under_package_data_in_dev_build() {
         // 不继承外部环境的 QTFOUNDER_LAB_DATA，否则这条会写到别处
         .env_remove("QTFOUNDER_LAB_DATA")
         .env_remove("XDG_DATA_HOME")
-        .args(["code", "clarify", "--stdin", "--json"])
+        .args(["product", "clarify", "--stdin", "--json"])
         .write_stdin(stdin_json(
             Some("默认数据目录的事"),
             "它知道我要结论",
@@ -879,7 +879,7 @@ fn clarify_data_dir_io_error_exits_2() {
     let out = Command::cargo_bin("qtfounder-lab")
         .unwrap()
         .env("QTFOUNDER_LAB_DATA", &blocked)
-        .args(["code", "clarify", "--stdin"])
+        .args(["product", "clarify", "--stdin"])
         .write_stdin(stdin_json(
             Some("x"),
             "它知道我要结论",
@@ -894,9 +894,9 @@ fn clarify_data_dir_io_error_exits_2() {
 }
 
 #[test]
-fn code_without_subcommand_exits_2() {
+fn product_without_subcommand_exits_2() {
     let dir = lab();
-    let out = cmd(&dir).arg("code").output().unwrap();
+    let out = cmd(&dir).arg("product").output().unwrap();
     assert_eq!(out.status.code(), Some(2));
     let err: serde_json::Value = serde_json::from_slice(&out.stderr).unwrap();
     assert_eq!(err["error"]["code"], "USAGE");
@@ -907,10 +907,10 @@ fn help_exits_zero() {
     let dir = lab();
     let out = cmd(&dir).arg("--help").output().unwrap();
     assert_eq!(out.status.code(), Some(0));
-    assert!(stdout_of(&out).contains("code"));
+    assert!(stdout_of(&out).contains("product"));
 
     // 子命令帮助里列全两个入口
-    let out = cmd(&dir).args(["code", "--help"]).output().unwrap();
+    let out = cmd(&dir).args(["product", "--help"]).output().unwrap();
     assert_eq!(out.status.code(), Some(0));
     let text = stdout_of(&out);
     assert!(text.contains("requirement"), "帮助应列 requirement：{text}");

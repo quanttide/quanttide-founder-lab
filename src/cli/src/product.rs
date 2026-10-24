@@ -1,4 +1,4 @@
-//! 两个入口的实现：`code requirement`（只读）、`code clarify`（唯一写入路径）。
+//! 两个入口的实现：`product requirement`（只读）、`product clarify`（唯一写入路径）。
 
 use std::io::{self, Read as _, Write as _};
 
@@ -8,12 +8,12 @@ use serde_json::Value;
 use crate::store::{
     Clarification, Requirement, Store, append_rule_line, dedup_key, new_id, now_iso8601,
 };
-use crate::{AppError, CodeCommand};
+use crate::{AppError, ProductCommand};
 
-pub fn run(command: CodeCommand) -> Result<(), AppError> {
+pub fn run(command: ProductCommand) -> Result<(), AppError> {
     match command {
-        CodeCommand::Requirement { id, json } => requirement(id, json),
-        CodeCommand::Clarify {
+        ProductCommand::Requirement { id, json } => requirement(id, json),
+        ProductCommand::Clarify {
             task,
             stdin,
             revise,
@@ -90,7 +90,7 @@ fn list_requirements(store: &Store, json: bool) -> Result<(), AppError> {
     }
 
     if summaries.is_empty() {
-        println!("（暂无需求，先跑 qtfounder-lab code clarify）");
+        println!("（暂无需求，先跑 qtfounder-lab product clarify）");
         return Ok(());
     }
     for summary in &summaries {
@@ -112,7 +112,7 @@ fn show_requirement(store: &Store, id: &str, json: bool) -> Result<(), AppError>
         .find(|requirement| requirement.id == id)
         .ok_or_else(|| AppError::NotFound {
             message: format!("{id} 不存在"),
-            hint: "用 qtfounder-lab code requirement 查看".to_string(),
+            hint: "用 qtfounder-lab product requirement 查看".to_string(),
         })?;
 
     if json {
@@ -426,7 +426,7 @@ fn revise_record(id: &str, from_stdin: bool, json: bool) -> Result<(), AppError>
     }
     let requirement_id = requirement_id.ok_or_else(|| AppError::NotFound {
         message: format!("{id} 不存在"),
-        hint: "用 qtfounder-lab code requirement --id <需求 id> 查看".to_string(),
+        hint: "用 qtfounder-lab product requirement --id <需求 id> 查看".to_string(),
     })?;
     store.save()?;
 

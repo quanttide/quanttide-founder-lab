@@ -24,6 +24,7 @@ docs/
     work/    工作方式语料
 examples/
   core/           跨案例复用模块（segmentation / retrieval）
+  corpus-patrol/  存量巡检：历史快照重判 + 按层按时间汇总（`patrol.py` / `report.py`）
   memory-factory/ 记忆工厂（规格阶段：反向蒸馏，档案回扫日志）
   novel-planner/  小说策划助手（联想检索 + 任务评审看板，export/merge 与 Label Studio 往返）
     src/          代码（planner / searcher / task_board）
@@ -36,6 +37,7 @@ src/
 
 ## 当前状态
 
+- 存量巡检 `examples/corpus-patrol/`：把历史快照按今天的写作契约重判，分「随文件消失」「在留存文件里改掉」「今天还在」三档数；结论在创始人仓 `data/report/agent/corpus-patrol.md`
 - 联想检索 `examples/novel-planner/src/planner.py emotion`：从 memory 原始日志段为情绪日记草稿捞相关片段（bm25 / embed 两臂，预注册 τ 不回调），口径与结果见 `examples/novel-planner/docs/experiment.md`
 - 任务评审 `examples/novel-planner/src/planner.py export`：读 `examples/novel-planner/data/*任务扫描*.json`，与 Label Studio 双向往返——`export` 导出任务清单去标注，`merge` 把标注写回 json；工作流见 `docs/dev-guide/label-studio.md`
 - 固定测试 `python3 -m unittest discover -s examples/novel-planner/tests`：锁定切段、规则与看板读写行为，改代码前先跑

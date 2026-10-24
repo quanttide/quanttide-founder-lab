@@ -1,13 +1,13 @@
 //! qtfounder-lab：量潮创始人实验室 CLI（包名 `qtfounder-cli-lab`，命令 `qtfounder-lab`，与正式版 `qtfounder` 区分）。
 //!
 //! 两个入口，名词读、动词写：
-//! - `qtfounder-lab code intent`：看有哪些意图、哪些差重复了（只读）
-//! - `qtfounder-lab code clarify`：澄清一次（唯一写入路径）
+//! - `qtfounder-lab work intent`：看有哪些意图、哪些差重复了（只读）
+//! - `qtfounder-lab work clarify`：澄清一次（唯一写入路径）
 //!
 //! 契约见 `docs/api-references/`：字段、flag、JSON 出入、错误 JSON、退出码三档（0/2/3）。
 
-mod code;
 mod store;
+mod work;
 
 use clap::error::{ContextKind, ContextValue, ErrorKind};
 use clap::{CommandFactory, Parser, Subcommand};
@@ -53,14 +53,14 @@ struct Cli {
 #[derive(Subcommand)]
 enum CliCommand {
     /// 意图与澄清两个入口：名词读、动词写
-    Code {
+    Work {
         #[command(subcommand)]
-        command: CodeCommand,
+        command: WorkCommand,
     },
 }
 
 #[derive(Subcommand)]
-pub enum CodeCommand {
+pub enum WorkCommand {
     /// 看有哪些意图、哪些差重复了（只读）
     Intent {
         /// 给定时查一件事的详情，不给则列出全部
@@ -96,7 +96,7 @@ fn main() {
         Err(err) => exit_with_clap_error(err),
     };
     let outcome = match cli.command {
-        Some(CliCommand::Code { command }) => code::run(command),
+        Some(CliCommand::Work { command }) => work::run(command),
         None => {
             let _ = Cli::command().print_help();
             Ok(())

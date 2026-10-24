@@ -1,4 +1,4 @@
-//! 两个入口的实现：`code intent`（只读）、`code clarify`（唯一写入路径）。
+//! 两个入口的实现：`work intent`（只读）、`work clarify`（唯一写入路径）。
 
 use std::io::{self, Read as _, Write as _};
 
@@ -8,12 +8,12 @@ use serde_json::Value;
 use crate::store::{
     Clarification, Intent, Store, append_rule_line, dedup_key, new_id, now_iso8601,
 };
-use crate::{AppError, CodeCommand};
+use crate::{AppError, WorkCommand};
 
-pub fn run(command: CodeCommand) -> Result<(), AppError> {
+pub fn run(command: WorkCommand) -> Result<(), AppError> {
     match command {
-        CodeCommand::Intent { id, json } => intent(id, json),
-        CodeCommand::Clarify {
+        WorkCommand::Intent { id, json } => intent(id, json),
+        WorkCommand::Clarify {
             task,
             stdin,
             revise,
@@ -90,7 +90,7 @@ fn list_intents(store: &Store, json: bool) -> Result<(), AppError> {
     }
 
     if summaries.is_empty() {
-        println!("（暂无意图，先跑 qtfounder-lab code clarify）");
+        println!("（暂无意图，先跑 qtfounder-lab work clarify）");
         return Ok(());
     }
     for summary in &summaries {
@@ -112,7 +112,7 @@ fn show_intent(store: &Store, id: &str, json: bool) -> Result<(), AppError> {
         .find(|intent| intent.id == id)
         .ok_or_else(|| AppError::NotFound {
             message: format!("{id} 不存在"),
-            hint: "用 qtfounder-lab code intent 查看".to_string(),
+            hint: "用 qtfounder-lab work intent 查看".to_string(),
         })?;
 
     if json {
@@ -426,7 +426,7 @@ fn revise_record(id: &str, from_stdin: bool, json: bool) -> Result<(), AppError>
     }
     let intent_id = intent_id.ok_or_else(|| AppError::NotFound {
         message: format!("{id} 不存在"),
-        hint: "用 qtfounder-lab code intent --id <意图 id> 查看".to_string(),
+        hint: "用 qtfounder-lab work intent --id <意图 id> 查看".to_string(),
     })?;
     store.save()?;
 

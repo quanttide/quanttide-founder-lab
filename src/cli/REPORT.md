@@ -4,11 +4,11 @@
 
 ## 完成了什么
 
-- **`qtfounder-lab code intent`**（名词，只读）
+- **`qtfounder-lab work intent`**（名词，只读）
   - 无参列全部意图：任务、澄清次数、重复 ≥2 次的差（候选，含 `×N`）；空库提示先跑 clarify。
   - `--id <id>` 出详情（该意图下全部澄清记录）；不存在 → 退出码 3，stderr 错误 JSON（`NOT_FOUND` + hint）。
   - `--json` 输出契约字段与顺序：列表 `id / task / at / clarifications / candidates`（候选含 `actual_key / count / clarification_ids`），详情 `id / task / at / clarifications[]`。
-- **`qtfounder-lab code clarify`**（动词，唯一写入路径）
+- **`qtfounder-lab work clarify`**（动词，唯一写入路径）
   - 无参交互两问（原以为它知道什么 / 它实际做了什么），模板提示词当场生成；需要新开时先问任务，有可挂的意图则不问；答得笼统（<6 字）追问一次「举它刚才那句话或那个动作？」。
   - `--task <一句话>` 新开一件事；不给则挂最近一件。
   - `--stdin` 整条 JSON 读入（`task?/before/actual/prompt`，字段名与输出一致）；缺字段、空文本、类型不对、解析失败各报对应错误 JSON。
@@ -25,24 +25,24 @@
 ```
 cargo fmt --check                                    ✅
 cargo clippy --all-targets --offline -- -D warnings  ✅
-cargo test --offline                                 ✅ 32 passed（tests/code.rs）
+cargo test --offline                                 ✅ 32 passed（tests/work.rs）
 ```
 
 ## 覆盖表（命令/参数 → 用例名）
 
 | # | 命令 / 参数 / 路径 | 用例名 |
 |---|--------------------|--------|
-| 1 | `code intent --json`（空库） | `intent_list_json_empty` |
-| 2 | `code intent`（空库，人读） | `intent_list_human_empty` |
-| 3 | `code intent --json`（计数、候选、归一化、字段顺序） | `intent_list_json_counts_and_candidates` |
-| 4 | `code intent`（人读含候选 ×2） | `intent_list_human_with_candidates` |
-| 5 | `code intent --id <id> --json`（详情五字段） | `intent_detail_json` |
-| 6 | `code intent --id <id>`（人读详情） | `intent_detail_human` |
+| 1 | `work intent --json`（空库） | `intent_list_json_empty` |
+| 2 | `work intent`（空库，人读） | `intent_list_human_empty` |
+| 3 | `work intent --json`（计数、候选、归一化、字段顺序） | `intent_list_json_counts_and_candidates` |
+| 4 | `work intent`（人读含候选 ×2） | `intent_list_human_with_candidates` |
+| 5 | `work intent --id <id> --json`（详情五字段） | `intent_detail_json` |
+| 6 | `work intent --id <id>`（人读详情） | `intent_detail_human` |
 | 7 | `--id` 不存在 → 退出码 3 `NOT_FOUND`+hint | `intent_id_not_found_exits_3` |
 | 8 | 未知参数 `--foo` → 退出码 2 | `intent_unknown_flag_exits_2` |
 | 9 | `--id` 缺值 → 退出码 2 | `intent_id_without_value_exits_2` |
-| 10 | `code clarify` 交互新开（问任务+两问+模板提示词） | `clarify_interactive_opens_first_task` |
-| 11 | `code clarify` 交互挂最近（不问任务） | `clarify_interactive_attaches_recent_without_task_prompt` |
+| 10 | `work clarify` 交互新开（问任务+两问+模板提示词） | `clarify_interactive_opens_first_task` |
+| 11 | `work clarify` 交互挂最近（不问任务） | `clarify_interactive_attaches_recent_without_task_prompt` |
 | 12 | 交互笼统答案追问一次 | `clarify_interactive_reasks_vague_answer` |
 | 13 | 交互 EOF → 退出码 2 `缺少回答` | `clarify_interactive_eof_exits_2` |
 | 14 | `--task` 新开一件事 | `clarify_task_opens_new_intent` |
@@ -62,7 +62,7 @@ cargo test --offline                                 ✅ 32 passed（tests/code.
 | 28 | `--rule ""` → 退出码 2 | `clarify_rule_empty_text_exits_2` |
 | 29 | 默认数据目录 `./data/clarify.json` | `clarify_default_data_dir_under_cwd` |
 | 30 | `QTFOUNDER_LAB_DATA` 指向不可用位置 → 退出码 2 | `clarify_data_dir_io_error_exits_2` |
-| 31 | `code` 缺子命令 → 退出码 2 | `code_without_subcommand_exits_2` |
+| 31 | `work` 缺子命令 → 退出码 2 | `work_without_subcommand_exits_2` |
 | 32 | `--help` / `work --help` → 退出码 0 | `help_exits_zero` |
 
 `QTFOUNDER_LAB_DATA` 指向 tempfile 是全部用例的默认设置（用例 29 专门验证不设时的默认路径）。

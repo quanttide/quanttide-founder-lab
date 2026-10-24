@@ -1,6 +1,6 @@
 # qtfounder-cli-lab
 
-量潮创始人实验室 CLI（命令名 `qtfounder-lab`，与正式版 `qtfounder` 区分），已实现两组入口：需求侧的名词读（`product requirement`）与动词写（`product clarify`），以及反思侧的 `health reflect`。
+量潮创始人实验室 CLI（命令名 `qtfounder-lab`，与正式版 `qtfounder` 区分），已实现两组入口：需求侧的名词读（`product requirement`）与动词写（`product clarify`），以及反思侧的 `health reflect`。反思已并入正式版（`qtfounder health reflect`），这里保留作实验场，新的录入字段先在这边试。
 
 ## 开发
 

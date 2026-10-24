@@ -2,7 +2,7 @@
 
 用法（在创始人仓根跑）：
 
-    python3 examples/corpus-patrol/report.py . --data examples/corpus-patrol/data/findings.jsonl
+    python3 examples/quanttide-founder-lab/examples/corpus-patrol/report.py . --data examples/corpus-patrol/data/findings.jsonl
 
 三档分开算，是因为归宿不同：
 
@@ -20,6 +20,8 @@ import re
 import subprocess
 from collections import Counter, defaultdict
 from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
 
 
 def classify(row: dict) -> str:
@@ -70,7 +72,7 @@ def trace(root: Path, path: str, advice: str) -> bool | None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="存量巡检汇总")
     parser.add_argument("root", nargs="?", default=".", help="仓根，用来回溯提交")
-    parser.add_argument("--data", default="examples/corpus-patrol/data/findings.jsonl")
+    parser.add_argument("--data", default=str(HERE / "data/findings.jsonl"))
     parser.add_argument("--spot", type=int, default=40, help="抽检多少条消失的术语命中")
     args = parser.parse_args()
 

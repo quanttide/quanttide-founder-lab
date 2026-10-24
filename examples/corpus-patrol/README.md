@@ -9,8 +9,8 @@
 在创始人仓根执行：
 
 ```bash
-python3 examples/corpus-patrol/patrol.py . --samples 12
-python3 examples/corpus-patrol/report.py .
+python3 examples/quanttide-founder-lab/examples/corpus-patrol/patrol.py . --samples 12
+python3 examples/quanttide-founder-lab/examples/corpus-patrol/report.py .
 ```
 
 第一步找根下所有 git 仓，每个仓按提交数均匀抽若干次（两端必取、中间等距），各自导出成一棵树，跑 `language` 与 `docs` 两套审计，逐条写进 `data/findings.jsonl`。第二步按层与时间汇总，并对消失的术语命中回溯提交。

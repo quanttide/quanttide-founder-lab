@@ -2,7 +2,7 @@
 
 用法（在创始人仓根跑）：
 
-    python3 examples/corpus-patrol/patrol.py . --out examples/corpus-patrol/data/findings.jsonl
+    python3 examples/quanttide-founder-lab/examples/corpus-patrol/patrol.py . --out examples/corpus-patrol/data/findings.jsonl
 
 做了什么：找出根下所有 git 仓，每个仓按提交数均匀抽若干次，各自导出成一棵树
 （路径保持根目录相对，契约里的 exclude 才对得上），跑 language 与 docs 两套审计，
@@ -25,6 +25,7 @@ from pathlib import Path
 
 MAIN = Path(__file__).resolve().parents[4]
 DEFAULT_CONTRACTS = MAIN / "apps/qtfounder/src/cli/src"
+HERE = Path(__file__).resolve().parent
 
 
 def git(repo: Path, *args: str) -> str:
@@ -115,7 +116,7 @@ def clear(directory: Path) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="存量巡检采集")
     parser.add_argument("root", nargs="?", default=".", help="仓根，缺省当前目录")
-    parser.add_argument("--out", default="examples/corpus-patrol/data/findings.jsonl")
+    parser.add_argument("--out", default=str(HERE / "data/findings.jsonl"))
     parser.add_argument("--samples", type=int, default=12, help="每个仓抽多少个提交，0 表示全取")
     parser.add_argument("--contracts", default=str(DEFAULT_CONTRACTS), help="两份契约所在目录")
     args = parser.parse_args()

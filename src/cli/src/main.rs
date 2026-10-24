@@ -6,8 +6,9 @@
 //!
 //! 契约见 `docs/api-references/`：字段、flag、JSON 出入、错误 JSON、退出码三档（0/2/3）。
 
-mod store;
+mod health;
 mod product;
+mod store;
 
 use clap::error::{ContextKind, ContextValue, ErrorKind};
 use clap::{CommandFactory, Parser, Subcommand};
@@ -57,6 +58,42 @@ enum CliCommand {
         #[command(subcommand)]
         command: ProductCommand,
     },
+    /// 心理与消耗：一条反思的 CBT 记录
+    Health {
+        #[command(subcommand)]
+        command: HealthCommand,
+    },
+}
+
+#[derive(Subcommand)]
+pub enum HealthCommand {
+    /// 记一条反思、看还差什么与到期待复看、回填行为实验结果
+    Reflect {
+        /// 整条 JSON 从标准输入读入，字段名与 --json 输出一致
+        #[arg(long)]
+        stdin: bool,
+        /// 列出待复看与未填完的记录
+        #[arg(long)]
+        list: bool,
+        /// 只列已过复看日的实验（与 --list 同用）
+        #[arg(long)]
+        due: bool,
+        /// 给定时看一条记录的详情
+        #[arg(long)]
+        id: Option<String>,
+        /// 回填一条实验的结果，给记录 id
+        #[arg(long)]
+        observe: Option<String>,
+        /// 回填的结果，一句话说实际发生了什么（与 --observe 同用）
+        #[arg(long)]
+        result: Option<String>,
+        /// 回填后的情绪强度 0-100（与 --observe 同用）
+        #[arg(long)]
+        emotion: Option<u8>,
+        /// 输出机器可读 JSON
+        #[arg(long)]
+        json: bool,
+    },
 }
 
 #[derive(Subcommand)]
@@ -97,6 +134,7 @@ fn main() {
     };
     let outcome = match cli.command {
         Some(CliCommand::Product { command }) => product::run(command),
+        Some(CliCommand::Health { command }) => health::run(command),
         None => {
             let _ = Cli::command().print_help();
             Ok(())
@@ -127,7 +165,9 @@ fn exit_with_clap_error(err: clap::Error) -> ! {
             std::process::exit(2);
         }
         ErrorKind::MissingSubcommand | ErrorKind::DisplayHelpOnMissingArgumentOrSubcommand => {
-            print_error(&AppError::usage("缺少子命令：requirement 或 clarify"));
+            print_error(&AppError::usage(
+                "缺少子命令：product（requirement／clarify）或 health（reflect）",
+            ));
             std::process::exit(2);
         }
         _ => {

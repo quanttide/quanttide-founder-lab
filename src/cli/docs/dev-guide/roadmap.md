@@ -8,7 +8,7 @@
 
 ## 当前状态
 
-脚手架：入口与结构保留，暂无子命令。新功能接入：`src/` 下新增模块 → `CliCommand` 注册 → 依赖加回 `Cargo.toml`。
+两组入口已落地：`product requirement` ／ `product clarify`（需求差），`health reflect`（CBT 式反思记录）。新功能接入：`src/` 下新增模块 → `CliCommand` 注册 → 依赖加回 `Cargo.toml`。
 
 ## 候选功能
 

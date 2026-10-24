@@ -102,3 +102,19 @@ cargo test --offline                                 ✅ 32 passed（tests/work.
 - `docs/index.md` 登记新用户文档（该文件不在允许改动范围）。
 - 任何 git 操作（任务禁止：未 add/commit/push/status）。
 - 向量检索、多用户、同步、MCP 适配（设计文档「第一版不做」）。
+
+## 追加：`health reflect`
+
+反思侧新增一组入口，与需求侧互不依赖。建模照 CBT 的思维记录：情境、情绪与强度、自动思维、认知扭曲、正反证据、替代思维，再加一个能回填的行为实验；角色归属（`domain`、`control`）沿用 `founder-reflect` 的两问。
+
+四个入口互斥：`--stdin` 记一条，`--list` 看总表（`--due` 只看到期），`--id` 看一条，`--observe` 回填实验结果。没有交互问卷——能填表，反思就会退化成填表。
+
+记一条后返回 `missing` 与 `next_question`：按 CBT 的填栏顺序给出第一处空缺要问的那一句，追问交给对话，工具不追问。`recurring` 只列出现 ≥2 次的认知扭曲，这是反思里唯一够格立规则的信号。
+
+存储为同一数据目录下的 `reflect.json`，与 `clarify.json` 分开。认知扭曲词表十项，英文键与中文标签互为别名，落库统一存中文；`domain` 与 `control` 取值不认识、日期不是 `YYYY-MM-DD`、强度超出 0-100 都退 2。
+
+```text
+cargo test --offline  → 61 passed（unit 5 + health 19 + product 37）
+```
+
+契约见 [docs/api-references/health.md](docs/api-references/health.md)；测试覆盖表见 [tests/health.rs](tests/health.rs)。

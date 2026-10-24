@@ -2,12 +2,13 @@
 
 `src/cli` 的命令行接口。这里说的 API 不是 HTTP —— CLI 就是这套能力的唯一入口，它的入参、出参和退出码就是契约：模型按同样的形状调用，人按同样的形状阅读。
 
-两个入口，名词读、动词写：
+两类入口，名词读、动词写：
 
 | 入口 | 形态 | 用途 | 详细 |
 |------|------|------|------|
 | `qtfounder-lab product requirement` | 名词 | 看有哪些需求、哪些差重复了 | [requirement.md](requirement.md) |
 | `qtfounder-lab product clarify` | 动词 | 澄清一次，产出一段能粘回对话的话 | [clarify.md](clarify.md) |
+| `qtfounder-lab health reflect` | 动词兼名词 | 记一条反思、看待复看的实验、回填结果 | [health.md](health.md) |
 
 > 实验室版的命令是 `qtfounder-lab`，与正式版 `qtfounder`（`apps/qtfounder/src/cli`）区分。在 `src/cli/` 下用 `cargo run --` 等价于这条命令，例如 `cargo run -- product clarify`。
 
@@ -33,11 +34,11 @@
 | 2 | 用法错（参数缺失、互斥、类型不对） |
 | 3 | 未找到（`--id` 指向的需求不存在） |
 
-顶层用法错同一条路：缺子命令给 `{"error":{"code":"USAGE","message":"缺少子命令：requirement 或 clarify"}}`，未知参数给 `未知参数 --foo`，退出码都是 2。
+顶层用法错同一条路：缺子命令给 `{"error":{"code":"USAGE","message":"缺少子命令：product（requirement／clarify）或 health（reflect）"}}`，未知参数给 `未知参数 --foo`，退出码都是 2。
 
 **幂等**：写入用的去重键是 sha256(before + actual)。重复提交不新增记录，返回已有那条并把 `deduplicated` 置为 true，退出码仍为 0——模型重试是安全的。
 
-**数据落点**：开发构建（`cargo run`、`cargo test`）落**代码包内的 `data/`**（`src/cli/data/`），开发者直接看得到；发布构建遵循 XDG，落 `$XDG_DATA_HOME/qtfounder-lab`（未设则 `~/.local/share/qtfounder-lab`）。`QTFOUNDER_LAB_DATA` 优先级最高，测试与临时切换用它。目录里两个文件：`clarify.json`（账本）、`rules.md`（规则）。
+**数据落点**：开发构建（`cargo run`、`cargo test`）落代码包内的 `data/`（`src/cli/data/`），开发者直接看得到；发布构建遵循 XDG，落 `$XDG_DATA_HOME/qtfounder-lab`（未设则 `~/.local/share/qtfounder-lab`）。`QTFOUNDER_LAB_DATA` 优先级最高，测试与临时切换用它。需求侧两个文件：`clarify.json`（账本）、`rules.md`（规则）；反思单独一份 `reflect.json`，不与需求差混存。
 
 ## 数据形状
 
@@ -64,3 +65,5 @@ requirement（一件事）
 没有第五个字段。`actual` 归一化（小写、去标点、去空白）后同样的出现 ≥2 次，就是一条规则候选。
 
 **落盘**：数据目录默认 `data/`，环境变量 `QTFOUNDER_LAB_DATA` 覆盖整个数据目录（测试、多套数据用）。记录在 `<数据目录>/clarify.json`（单文件 JSON），规则在同目录 `rules.md` 的一行；哪批重复差已被规则处理，作为元数据记在数据文件里，不新增领域字段。
+
+反思是另一棵树，没有上下级：一条记录就是一整条判断链（情境 → 自动思维 → 认知扭曲 → 正反证据 → 替代思维 → 行为实验），存 `<数据目录>/reflect.json`。两个字段接角色分离（`domain`、`control`），一个 `experiment` 接行为实验的预测与回填；可缺的栏位留在 `missing` 里，不另设状态机。形状与 CBT 的对应关系见 [health.md](health.md)。

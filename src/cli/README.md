@@ -1,19 +1,20 @@
 # qtfounder-cli-lab
 
-量潮创始人实验室 CLI（命令名 `qtfounder-lab`，与正式版 `qtfounder` 区分），已实现两个入口：名词读的 `product requirement`、动词写的 `product clarify`。
+量潮创始人实验室 CLI（命令名 `qtfounder-lab`，与正式版 `qtfounder` 区分），已实现两组入口：需求侧的名词读（`product requirement`）与动词写（`product clarify`），以及反思侧的 `health reflect`。
 
 ## 开发
 
 ```bash
 cargo run -- product clarify     # 交互澄清一次（无子命令时输出帮助）
 cargo run -- product requirement      # 列需求与候选
+cargo run -- health reflect --list    # 待复看的实验与未填完的反思
 cargo build --release
 cargo test                    # 离线环境用 cargo test --offline
 ```
 
 ## 存储
 
-单文件 JSON `data/clarify.json`（环境变量 `QTFOUNDER_LAB_DATA` 覆盖整个数据目录），规则在同目录 `rules.md`；`data/` 已在 `.gitignore`。
+单文件 JSON `data/clarify.json`（需求差）与 `data/reflect.json`（反思），环境变量 `QTFOUNDER_LAB_DATA` 覆盖整个数据目录，规则在同目录 `rules.md`；`data/` 已在 `.gitignore`。
 
 ## 添加新功能
 

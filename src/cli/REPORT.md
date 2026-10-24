@@ -98,7 +98,7 @@ cargo test --offline                                 ✅ 32 passed（tests/work.
 ## 没做的事
 
 - HTTP 四路径与 server + SQLite（dev-guide 落地顺序的后续步骤）；本轮只做 CLI。
-- 两周指标（prompt 粘回率、规则点头率）：skill 已写在创始人仓 `.agents/skills/clarify-intent/`，指标待跑两周后填。
+- 两周指标（prompt 粘回率、规则点头率）：skill 已写在创始人仓 `.agents/skills/code-clarify/`，指标待跑两周后填。
 - `docs/index.md` 登记新用户文档（该文件不在允许改动范围）。
 - 任何 git 操作（任务禁止：未 add/commit/push/status）。
 - 向量检索、多用户、同步、MCP 适配（设计文档「第一版不做」）。

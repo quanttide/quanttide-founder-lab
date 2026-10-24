@@ -1,6 +1,6 @@
-# 澄清与意图：怎么用
+# 澄清与需求：怎么用
 
-`qtfounder-lab work clarify` 记录一次「AI 不对劲」，`qtfounder-lab work intent` 看这些记录攒出了什么。这条命令不分阶段：开始前、卡住时、结束后敲的是同一句，工具按「有没有可挂的事」决定新开一件还是续记。
+`qtfounder-lab code clarify` 记录一次「AI 不对劲」，`qtfounder-lab code requirement` 看这些记录攒出了什么。这条命令不分阶段：开始前、卡住时、结束后敲的是同一句，工具按「有没有可挂的事」决定新开一件还是续记。
 
 > `>` 后面是你要敲进去的答案，回车提交。答得笼统（比如「它就是不行」）会被追问一次「举它刚才那句话或那个动作」——概括是情绪，不是信息。
 
@@ -8,7 +8,7 @@
 
 不用你记着要澄清，下面三个时机它自己开口：
 
-- **干活当中**：同一个要求你说了第二遍、同一处被连改三次、你嘴里出现「又是这样」「不是这个意思」，或者你直接改掉它刚定的默认值——它会**自己记一条**，然后回一行「已记 int_xxx / clr_xxx：哪一处差，不想要就说删」。不打断你手头的活；你说删就删，这一类当次不再记。
+- **干活当中**：同一个要求你说了第二遍、同一处被连改三次、你嘴里出现「又是这样」「不是这个意思」，或者你直接改掉它刚定的默认值——它会**自己记一条**，然后回一行「已记 req_xxx / clr_xxx：哪一处差，不想要就说删」。不打断你手头的活；你说删就删，这一类当次不再记。
 - **任务收尾**：交付时它自己查一遍攒下来的差，某类已经重复 ≥2 次就问「要不要立规则？你给一句话」。每次任务只问一次。
 - **你召唤**：敲 `/clarify-intent` 走完整两问。
 
@@ -19,7 +19,7 @@
 新起一件事，连着回答两问：
 
 ```bash
-qtfounder-lab work clarify --task "给这段代码写单元测试"
+qtfounder-lab code clarify --task "给这段代码写单元测试"
 ```
 
 ```text
@@ -32,7 +32,7 @@ qtfounder-lab work clarify --task "给这段代码写单元测试"
 它实际做了「给了五段解释加伪代码，没有一行能跑」。
 请按我原以为的重做一遍，把这两条当约束。
 
-已记入 int_1SAZ / clr_FYEY
+已记入 req_1SAZ / clr_FYEY
 ```
 
 中间那三行就是拿去粘回对话的话。你不用自己组织语言，改两行也能用——它只是把你刚才的两问排成了 AI 能直接照改的形状。
@@ -42,7 +42,7 @@ qtfounder-lab work clarify --task "给这段代码写单元测试"
 同一件事还在做，直接再敲一次，它挂到最近一件事上，不问任务：
 
 ```bash
-qtfounder-lab work clarify
+qtfounder-lab code clarify
 ```
 
 ```text
@@ -55,7 +55,7 @@ qtfounder-lab work clarify
 它实际做了「先讲了两大段背景才给答案」。
 请按我原以为的重做一遍，把这两条当约束。
 
-已记入 int_1SAZ / clr_VTAV
+已记入 req_1SAZ / clr_VTAV
 ```
 
 记完就走：把中间那段贴回对话，看它这次改不改。
@@ -63,11 +63,11 @@ qtfounder-lab work clarify
 ## 结束后：看攒出了什么
 
 ```bash
-qtfounder-lab work intent
+qtfounder-lab code requirement
 ```
 
 ```text
-int_1SAZ  给这段代码写单元测试  3 次澄清
+req_1SAZ  给这段代码写单元测试  3 次澄清
   候选：先讲了两大段背景才给答案  ×2
 ```
 
@@ -76,11 +76,11 @@ int_1SAZ  给这段代码写单元测试  3 次澄清
 看某件事的全部记录：
 
 ```bash
-qtfounder-lab work intent --id int_1SAZ
+qtfounder-lab code requirement --id req_1SAZ
 ```
 
 ```text
-int_1SAZ  给这段代码写单元测试  2026-10-18T08:12:42Z
+req_1SAZ  给这段代码写单元测试  2026-10-18T08:12:42Z
   clr_FYEY  2026-10-18T08:12:42Z
     原以为：它知道项目用 pytest，fixture 在 conftest，会直接给出可运行的测试
     实际：给了五段解释加伪代码，没有一行能跑
@@ -96,8 +96,8 @@ int_1SAZ  给这段代码写单元测试  2026-10-18T08:12:42Z
 加 `--json` 换成机器可读输出（脚本、模型用）：
 
 ```bash
-qtfounder-lab work intent --json
-qtfounder-lab work intent --id int_1SAZ --json
+qtfounder-lab code requirement --json
+qtfounder-lab code requirement --id req_1SAZ --json
 ```
 
 ## 规则怎么长出来
@@ -105,7 +105,7 @@ qtfounder-lab work intent --id int_1SAZ --json
 一个毛病犯两次 → 成为候选 → 你点头挑一条写成规则，工具把它追加进 `rules.md`：
 
 ```bash
-qtfounder-lab work clarify --rule "先结论后细节，除非我明确要展开"
+qtfounder-lab code clarify --rule "先结论后细节，除非我明确要展开"
 ```
 
 ```text
@@ -127,13 +127,13 @@ qtfounder-lab work clarify --rule "先结论后细节，除非我明确要展开
 
 ```bash
 echo '{"task":"把日志里的观察站段落切出来","before":"它知道只切段落不加解释","actual":"整段照搬没切分","prompt":"按段落切开重发"}' \
-  | qtfounder-lab work clarify --stdin --json
+  | qtfounder-lab code clarify --stdin --json
 ```
 
 ```json
 {
   "id": "clr_12WN",
-  "intent_id": "int_XNRM",
+  "requirement_id": "req_XNRM",
   "at": "2026-10-18T08:12:42Z",
   "deduplicated": false,
   "prompt": "按段落切开重发"
@@ -145,7 +145,7 @@ echo '{"task":"把日志里的观察站段落切出来","before":"它知道只�
 ```json
 {
   "id": "clr_12WN",
-  "intent_id": "int_XNRM",
+  "requirement_id": "req_XNRM",
   "at": "2026-10-18T08:12:42Z",
   "deduplicated": true,
   "prompt": "按段落切开重发"
@@ -157,7 +157,7 @@ echo '{"task":"把日志里的观察站段落切出来","before":"它知道只�
 字段里带了「我以为」「实际是」这类框架词，或者某一行写错了，别手改文件——用 `--revise` 指着那条记录原地改，提示词会跟着重拼：
 
 ```bash
-qtfounder-lab work clarify --revise clr_NHCX --stdin <<'JSON'
+qtfounder-lab code clarify --revise clr_NHCX --stdin <<'JSON'
 {"before":"只改我指定的那一段","actual":"整段重写"}
 JSON
 ```
@@ -170,15 +170,15 @@ JSON
 请按我原以为的重做一遍，把这两条当约束。
 ```
 
-记录编号（`clr_` 开头那个）在 `work intent --id <意图>` 里能看到。删记录不设命令，直接删文件里那一段即可。
+记录编号（`clr_` 开头那个）在 `code requirement --id <需求>` 里能看到。删记录不设命令，直接删文件里那一段即可。
 
 ## 出错时看什么
 
 错误一律是 JSON、写在 stderr，退出码三档：`0` 成功（含去重），`2` 用法错（参数缺失、互斥、类型不对），`3` 没找到（`--id` 指向的事不存在）。
 
 ```bash
-$ qtfounder-lab work intent --id int_没有  # 退出码 3
-{"error":{"code":"NOT_FOUND","message":"int_没有 不存在","hint":"用 qtfounder-lab work intent 查看"}}
+$ qtfounder-lab code requirement --id req_没有  # 退出码 3
+{"error":{"code":"NOT_FOUND","message":"req_没有 不存在","hint":"用 qtfounder-lab code requirement 查看"}}
 ```
 
 常见用法错：`--stdin` 少了 `before`/`actual`/`prompt`、`--task` 和 `--rule` 同时给、`--rule` 文本为空。逐参数的完整契约见 [接口参考](../../src/cli/docs/api-references/index.md)。

@@ -1,13 +1,13 @@
 //! qtfounder-lab：量潮创始人实验室 CLI（包名 `qtfounder-cli-lab`，命令 `qtfounder-lab`，与正式版 `qtfounder` 区分）。
 //!
 //! 两个入口，名词读、动词写：
-//! - `qtfounder-lab work intent`：看有哪些意图、哪些差重复了（只读）
-//! - `qtfounder-lab work clarify`：澄清一次（唯一写入路径）
+//! - `qtfounder-lab code requirement`：看有哪些需求、哪些差重复了（只读）
+//! - `qtfounder-lab code clarify`：澄清一次（唯一写入路径）
 //!
 //! 契约见 `docs/api-references/`：字段、flag、JSON 出入、错误 JSON、退出码三档（0/2/3）。
 
 mod store;
-mod work;
+mod code;
 
 use clap::error::{ContextKind, ContextValue, ErrorKind};
 use clap::{CommandFactory, Parser, Subcommand};
@@ -18,7 +18,7 @@ use serde::Serialize;
 pub enum AppError {
     /// 用法错（参数缺失、互斥、类型不对、读写失败）→ 退出码 2
     Usage(String),
-    /// 未找到（`--id` 指向的意图不存在）→ 退出码 3
+    /// 未找到（`--id` 指向的需求不存在）→ 退出码 3
     NotFound { message: String, hint: String },
 }
 
@@ -52,17 +52,17 @@ struct Cli {
 /// 顶层子命令注册表：新功能在这里加一个枚举分支。
 #[derive(Subcommand)]
 enum CliCommand {
-    /// 意图与澄清两个入口：名词读、动词写
-    Work {
+    /// 需求与澄清两个入口：名词读、动词写
+    Code {
         #[command(subcommand)]
-        command: WorkCommand,
+        command: CodeCommand,
     },
 }
 
 #[derive(Subcommand)]
-pub enum WorkCommand {
-    /// 看有哪些意图、哪些差重复了（只读）
-    Intent {
+pub enum CodeCommand {
+    /// 看有哪些需求、哪些差重复了（只读）
+    Requirement {
         /// 给定时查一件事的详情，不给则列出全部
         #[arg(long)]
         id: Option<String>,
@@ -72,7 +72,7 @@ pub enum WorkCommand {
     },
     /// 澄清一次：记录一次「不对劲」，当场给出一段能粘回对话的话
     Clarify {
-        /// 新开一件事；不给则挂到最近一次意图上
+        /// 新开一件事；不给则挂到最近一次需求上
         #[arg(long)]
         task: Option<String>,
         /// 整条 JSON 从标准输入读入，字段名与 --json 输出一致
@@ -96,7 +96,7 @@ fn main() {
         Err(err) => exit_with_clap_error(err),
     };
     let outcome = match cli.command {
-        Some(CliCommand::Work { command }) => work::run(command),
+        Some(CliCommand::Code { command }) => code::run(command),
         None => {
             let _ = Cli::command().print_help();
             Ok(())
@@ -127,7 +127,7 @@ fn exit_with_clap_error(err: clap::Error) -> ! {
             std::process::exit(2);
         }
         ErrorKind::MissingSubcommand | ErrorKind::DisplayHelpOnMissingArgumentOrSubcommand => {
-            print_error(&AppError::usage("缺少子命令：intent 或 clarify"));
+            print_error(&AppError::usage("缺少子命令：requirement 或 clarify"));
             std::process::exit(2);
         }
         _ => {

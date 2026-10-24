@@ -1,4 +1,4 @@
-//! 两个入口的实现：`work intent`（只读）、`work clarify`（唯一写入路径）。
+//! 两个入口的实现：`code requirement`（只读）、`code clarify`（唯一写入路径）。
 
 use std::io::{self, Read as _, Write as _};
 
@@ -6,14 +6,14 @@ use serde::Serialize;
 use serde_json::Value;
 
 use crate::store::{
-    Clarification, Intent, Store, append_rule_line, dedup_key, new_id, now_iso8601,
+    Clarification, Requirement, Store, append_rule_line, dedup_key, new_id, now_iso8601,
 };
-use crate::{AppError, WorkCommand};
+use crate::{AppError, CodeCommand};
 
-pub fn run(command: WorkCommand) -> Result<(), AppError> {
+pub fn run(command: CodeCommand) -> Result<(), AppError> {
     match command {
-        WorkCommand::Intent { id, json } => intent(id, json),
-        WorkCommand::Clarify {
+        CodeCommand::Requirement { id, json } => requirement(id, json),
+        CodeCommand::Clarify {
             task,
             stdin,
             revise,
@@ -23,11 +23,11 @@ pub fn run(command: WorkCommand) -> Result<(), AppError> {
     }
 }
 
-// ---------- intent（名词，只读） ----------
+// ---------- requirement（名词，只读） ----------
 
 #[derive(Serialize)]
 struct IntentList {
-    intents: Vec<IntentSummary>,
+    requirements: Vec<IntentSummary>,
 }
 
 #[derive(Serialize)]
@@ -54,24 +54,24 @@ struct IntentDetail<'a> {
     clarifications: &'a [Clarification],
 }
 
-fn intent(id: Option<String>, json: bool) -> Result<(), AppError> {
+fn requirement(id: Option<String>, json: bool) -> Result<(), AppError> {
     let store = Store::load()?;
     match id {
-        None => list_intents(&store, json),
-        Some(id) => show_intent(&store, &id, json),
+        None => list_requirements(&store, json),
+        Some(id) => show_requirement(&store, &id, json),
     }
 }
 
-fn list_intents(store: &Store, json: bool) -> Result<(), AppError> {
+fn list_requirements(store: &Store, json: bool) -> Result<(), AppError> {
     let summaries: Vec<IntentSummary> = store
-        .intents
+        .requirements
         .iter()
-        .map(|intent| IntentSummary {
-            id: intent.id.clone(),
-            task: intent.task.clone(),
-            at: intent.at.clone(),
-            clarifications: intent.clarifications.len(),
-            candidates: intent
+        .map(|requirement| IntentSummary {
+            id: requirement.id.clone(),
+            task: requirement.task.clone(),
+            at: requirement.at.clone(),
+            clarifications: requirement.clarifications.len(),
+            candidates: requirement
                 .candidates()
                 .into_iter()
                 .map(|group| CandidateSummary {
@@ -84,13 +84,13 @@ fn list_intents(store: &Store, json: bool) -> Result<(), AppError> {
         .collect();
 
     if json {
-        let list = IntentList { intents: summaries };
+        let list = IntentList { requirements: summaries };
         println!("{}", to_pretty(&list)?);
         return Ok(());
     }
 
     if summaries.is_empty() {
-        println!("（暂无意图，先跑 qtfounder-lab work clarify）");
+        println!("（暂无需求，先跑 qtfounder-lab code clarify）");
         return Ok(());
     }
     for summary in &summaries {
@@ -105,29 +105,29 @@ fn list_intents(store: &Store, json: bool) -> Result<(), AppError> {
     Ok(())
 }
 
-fn show_intent(store: &Store, id: &str, json: bool) -> Result<(), AppError> {
-    let intent = store
-        .intents
+fn show_requirement(store: &Store, id: &str, json: bool) -> Result<(), AppError> {
+    let requirement = store
+        .requirements
         .iter()
-        .find(|intent| intent.id == id)
+        .find(|requirement| requirement.id == id)
         .ok_or_else(|| AppError::NotFound {
             message: format!("{id} 不存在"),
-            hint: "用 qtfounder-lab work intent 查看".to_string(),
+            hint: "用 qtfounder-lab code requirement 查看".to_string(),
         })?;
 
     if json {
         let detail = IntentDetail {
-            id: &intent.id,
-            task: &intent.task,
-            at: &intent.at,
-            clarifications: &intent.clarifications,
+            id: &requirement.id,
+            task: &requirement.task,
+            at: &requirement.at,
+            clarifications: &requirement.clarifications,
         };
         println!("{}", to_pretty(&detail)?);
         return Ok(());
     }
 
-    println!("{}  {}  {}", intent.id, intent.task, intent.at);
-    for cl in &intent.clarifications {
+    println!("{}  {}  {}", requirement.id, requirement.task, requirement.at);
+    for cl in &requirement.clarifications {
         println!("  {}  {}", cl.id, cl.at);
         println!("    原以为：{}", cl.before);
         println!("    实际：{}", cl.actual);
@@ -141,7 +141,7 @@ fn show_intent(store: &Store, id: &str, json: bool) -> Result<(), AppError> {
 #[derive(Serialize)]
 struct ClarifyOutcome {
     id: String,
-    intent_id: String,
+    requirement_id: String,
     at: String,
     deduplicated: bool,
     prompt: String,
@@ -157,7 +157,7 @@ struct RuleOutcome {
 #[derive(Serialize)]
 struct ReviseOutcome<'a> {
     id: &'a str,
-    intent_id: &'a str,
+    requirement_id: &'a str,
     at: &'a str,
     prompt: &'a str,
 }
@@ -209,21 +209,21 @@ fn clarify(
     let key = dedup_key(&input.before, &input.actual);
     let existing = store
         .find_by_dedup_key(&key)
-        .map(|(intent_id, cl)| (intent_id, cl.clone()));
+        .map(|(requirement_id, cl)| (requirement_id, cl.clone()));
 
     let outcome = match existing {
-        Some((intent_id, cl)) => ClarifyOutcome {
+        Some((requirement_id, cl)) => ClarifyOutcome {
             id: cl.id,
-            intent_id,
+            requirement_id,
             at: cl.at,
             deduplicated: true,
             prompt: cl.prompt,
         },
         None => {
-            let intent_id = match input.task {
+            let requirement_id = match input.task {
                 Some(task) => {
-                    let id = new_id("int", |candidate| store.intent_exists(candidate));
-                    store.intents.push(Intent {
+                    let id = new_id("req", |candidate| store.requirement_exists(candidate));
+                    store.requirements.push(Requirement {
                         id: id.clone(),
                         task,
                         at: now_iso8601(),
@@ -232,21 +232,21 @@ fn clarify(
                     id
                 }
                 None => store
-                    .intents
+                    .requirements
                     .last()
-                    .map(|intent| intent.id.clone())
-                    .ok_or_else(|| AppError::usage("没有可挂的意图，缺少 task"))?,
+                    .map(|requirement| requirement.id.clone())
+                    .ok_or_else(|| AppError::usage("没有可挂的需求，缺少 task"))?,
             };
             let id = new_id("clr", |candidate| {
-                store.intent_exists(candidate) || store.clarification_exists(candidate)
+                store.requirement_exists(candidate) || store.clarification_exists(candidate)
             });
             let at = now_iso8601();
-            let intent = store
-                .intents
+            let requirement = store
+                .requirements
                 .iter_mut()
-                .find(|intent| intent.id == intent_id)
-                .expect("目标意图刚创建或已存在");
-            intent.clarifications.push(Clarification {
+                .find(|requirement| requirement.id == requirement_id)
+                .expect("目标需求刚创建或已存在");
+            requirement.clarifications.push(Clarification {
                 id: id.clone(),
                 at: at.clone(),
                 before: input.before,
@@ -256,7 +256,7 @@ fn clarify(
             store.save()?;
             ClarifyOutcome {
                 id,
-                intent_id,
+                requirement_id,
                 at,
                 deduplicated: false,
                 prompt: input.prompt,
@@ -272,10 +272,10 @@ fn clarify(
         if outcome.deduplicated {
             println!(
                 "已存在 {} / {}（重复提交，未新增记录）",
-                outcome.intent_id, outcome.id
+                outcome.requirement_id, outcome.id
             );
         } else {
-            println!("已记入 {} / {}", outcome.intent_id, outcome.id);
+            println!("已记入 {} / {}", outcome.requirement_id, outcome.id);
         }
     }
     Ok(())
@@ -311,7 +311,7 @@ fn input_from_stdin(flag_task: Option<String>) -> Result<ClarifyInput, AppError>
 fn input_interactive(flag_task: Option<String>, store: &Store) -> Result<ClarifyInput, AppError> {
     let task = match flag_task {
         Some(task) => Some(task),
-        None if store.intents.is_empty() => Some(ask_task()?),
+        None if store.requirements.is_empty() => Some(ask_task()?),
         None => None,
     };
     let before = ask_question("你原本以为它知道 / 会做什么？")?;
@@ -414,33 +414,33 @@ fn revise_record(id: &str, from_stdin: bool, json: bool) -> Result<(), AppError>
     let mut store = Store::load()?;
     let input = input_from_stdin(None)?;
 
-    let mut intent_id: Option<String> = None;
-    for intent in store.intents.iter_mut() {
-        if let Some(cl) = intent.clarifications.iter_mut().find(|cl| cl.id == id) {
+    let mut requirement_id: Option<String> = None;
+    for requirement in store.requirements.iter_mut() {
+        if let Some(cl) = requirement.clarifications.iter_mut().find(|cl| cl.id == id) {
             cl.before = input.before;
             cl.actual = input.actual;
             cl.prompt = input.prompt;
-            intent_id = Some(intent.id.clone());
+            requirement_id = Some(requirement.id.clone());
             break;
         }
     }
-    let intent_id = intent_id.ok_or_else(|| AppError::NotFound {
+    let requirement_id = requirement_id.ok_or_else(|| AppError::NotFound {
         message: format!("{id} 不存在"),
-        hint: "用 qtfounder-lab work intent --id <意图 id> 查看".to_string(),
+        hint: "用 qtfounder-lab code requirement --id <需求 id> 查看".to_string(),
     })?;
     store.save()?;
 
     let record = store
-        .intents
+        .requirements
         .iter()
-        .find(|intent| intent.id == intent_id)
-        .and_then(|intent| intent.clarifications.iter().find(|cl| cl.id == id))
+        .find(|requirement| requirement.id == requirement_id)
+        .and_then(|requirement| requirement.clarifications.iter().find(|cl| cl.id == id))
         .expect("刚修正的记录必定存在");
 
     if json {
         let outcome = ReviseOutcome {
             id: &record.id,
-            intent_id: &intent_id,
+            requirement_id: &requirement_id,
             at: &record.at,
             prompt: &record.prompt,
         };

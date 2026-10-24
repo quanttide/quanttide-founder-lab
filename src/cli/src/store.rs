@@ -1,5 +1,5 @@
 //! 单文件 JSON 存储：数据目录默认 `data/`（环境变量 `QTFOUNDER_LAB_DATA` 覆盖整个数据目录），
-//! 意图与澄清记录落 `clarify.json`，规则落 `rules.md`。不引 SQLite（离线无 bundled sqlite）。
+//! 需求与澄清记录落 `clarify.json`，规则落 `rules.md`。不引 SQLite（离线无 bundled sqlite）。
 
 use std::fs;
 use std::io::Write as _;
@@ -29,7 +29,7 @@ pub struct Clarification {
 
 /// 一件事。
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Intent {
+pub struct Requirement {
     pub id: String,
     pub task: String,
     pub at: String,
@@ -44,11 +44,11 @@ pub struct CandidateGroup {
     pub ids: Vec<String>,
 }
 
-/// 数据文件的全部内容：意图层 + 已固化重复差的 id（元数据，不是第三个领域对象）。
+/// 数据文件的全部内容：需求层 + 已固化重复差的 id（元数据，不是第三个领域对象）。
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Store {
-    #[serde(default)]
-    pub intents: Vec<Intent>,
+    #[serde(default, alias = "intents")]
+    pub requirements: Vec<Requirement>,
     /// 已由 `rules.md` 固化的重复差（澄清 id），立规则后不再计入新规则的 `source`
     #[serde(default)]
     pub processed_clarifications: Vec<String>,
@@ -132,12 +132,15 @@ impl Store {
         fs::write(&path, text).map_err(|err| io_error("写入", &path, err))
     }
 
-    /// 按首次出现顺序给出本意图下重复 ≥2 次的差。
+    /// 按首次出现顺序给出本需求下重复 ≥2 次的差。
     pub fn candidates(&self) -> Vec<CandidateGroup> {
-        self.intents.iter().flat_map(Intent::candidates).collect()
+        self.requirements
+            .iter()
+            .flat_map(Requirement::candidates)
+            .collect()
     }
 
-    /// 尚未被 `rules.md` 固化的重复差 id（跨全部意图，首次出现顺序）。
+    /// 尚未被 `rules.md` 固化的重复差 id（跨全部需求，首次出现顺序）。
     pub fn unprocessed_duplicate_ids(&self) -> Vec<String> {
         self.candidates()
             .into_iter()
@@ -148,28 +151,30 @@ impl Store {
 
     /// 去重键 sha256(before + actual) 命中的既有记录。
     pub fn find_by_dedup_key(&self, key: &str) -> Option<(String, &Clarification)> {
-        self.intents.iter().find_map(|intent| {
-            intent
+        self.requirements.iter().find_map(|requirement| {
+            requirement
                 .clarifications
                 .iter()
                 .find(|cl| dedup_key(&cl.before, &cl.actual) == key)
-                .map(|cl| (intent.id.clone(), cl))
+                .map(|cl| (requirement.id.clone(), cl))
         })
     }
 
-    pub fn intent_exists(&self, id: &str) -> bool {
-        self.intents.iter().any(|intent| intent.id == id)
+    pub fn requirement_exists(&self, id: &str) -> bool {
+        self.requirements
+            .iter()
+            .any(|requirement| requirement.id == id)
     }
 
     pub fn clarification_exists(&self, id: &str) -> bool {
-        self.intents
+        self.requirements
             .iter()
-            .any(|intent| intent.clarifications.iter().any(|cl| cl.id == id))
+            .any(|requirement| requirement.clarifications.iter().any(|cl| cl.id == id))
     }
 }
 
-impl Intent {
-    /// 本意图下 `actual` 归一化后重复 ≥2 次的差。
+impl Requirement {
+    /// 本需求下 `actual` 归一化后重复 ≥2 次的差。
     pub fn candidates(&self) -> Vec<CandidateGroup> {
         let mut groups: Vec<CandidateGroup> = Vec::new();
         for cl in &self.clarifications {
@@ -187,7 +192,7 @@ impl Intent {
     }
 }
 
-/// 生成 id：`int_01J9` / `clr_01J9` 形如，前缀 + 4 位 Crockford Base32（sha256 取前 20 位）。
+/// 生成 id：`req_01J9` / `clr_01J9` 形如，前缀 + 4 位 Crockford Base32（sha256 取前 20 位）。
 pub fn new_id(prefix: &str, is_taken: impl Fn(&str) -> bool) -> String {
     const ALPHABET: &[u8; 32] = b"0123456789ABCDEFGHJKMNPQRSTVWXYZ";
     static COUNTER: AtomicU64 = AtomicU64::new(0);

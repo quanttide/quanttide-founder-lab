@@ -6,10 +6,10 @@
 
 | 入口 | 形态 | 用途 | 详细 |
 |------|------|------|------|
-| `qtfounder-lab work intent` | 名词 | 看有哪些意图、哪些差重复了 | [intent.md](intent.md) |
-| `qtfounder-lab work clarify` | 动词 | 澄清一次，产出一段能粘回对话的话 | [clarify.md](clarify.md) |
+| `qtfounder-lab code requirement` | 名词 | 看有哪些需求、哪些差重复了 | [requirement.md](requirement.md) |
+| `qtfounder-lab code clarify` | 动词 | 澄清一次，产出一段能粘回对话的话 | [clarify.md](clarify.md) |
 
-> 实验室版的命令是 `qtfounder-lab`，与正式版 `qtfounder`（`apps/qtfounder/src/cli`）区分。在 `src/cli/` 下用 `cargo run --` 等价于这条命令，例如 `cargo run -- work clarify`。
+> 实验室版的命令是 `qtfounder-lab`，与正式版 `qtfounder`（`apps/qtfounder/src/cli`）区分。在 `src/cli/` 下用 `cargo run --` 等价于这条命令，例如 `cargo run -- code clarify`。
 
 ## 通用约定
 
@@ -22,7 +22,7 @@
 **错误一律 JSON，写 stderr**：
 
 ```json
-{"error":{"code":"NOT_FOUND","message":"int_01J9 不存在","hint":"用 qtfounder-lab work intent 查看"}}
+{"error":{"code":"NOT_FOUND","message":"req_01J9 不存在","hint":"用 qtfounder-lab code requirement 查看"}}
 ```
 
 **退出码三档**：
@@ -31,9 +31,9 @@
 |----|------|
 | 0 | 成功（含幂等去重） |
 | 2 | 用法错（参数缺失、互斥、类型不对） |
-| 3 | 未找到（`--id` 指向的意图不存在） |
+| 3 | 未找到（`--id` 指向的需求不存在） |
 
-顶层用法错同一条路：缺子命令给 `{"error":{"code":"USAGE","message":"缺少子命令：intent 或 clarify"}}`，未知参数给 `未知参数 --foo`，退出码都是 2。
+顶层用法错同一条路：缺子命令给 `{"error":{"code":"USAGE","message":"缺少子命令：requirement 或 clarify"}}`，未知参数给 `未知参数 --foo`，退出码都是 2。
 
 **幂等**：写入用的去重键是 sha256(before + actual)。重复提交不新增记录，返回已有那条并把 `deduplicated` 置为 true，退出码仍为 0——模型重试是安全的。
 
@@ -44,7 +44,7 @@
 两层，没有第三层：
 
 ```text
-intent（一件事）
+requirement（一件事）
 └── clarification[]（这次哪里不对）
 ```
 
@@ -52,7 +52,7 @@ intent（一件事）
 
 | 对象 | 字段 | 说明 |
 |------|------|------|
-| intent | `id` | 自动生成，形如 `int_01J9` |
+| requirement | `id` | 自动生成，形如 `req_01J9` |
 | | `task` | 一句话，这件事要干什么 |
 | | `at` | 创建时间，ISO 8601 |
 | clarification | `id` | 自动生成，形如 `clr_01J9` |

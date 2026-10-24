@@ -56,6 +56,9 @@ const QUESTIONS: &[(&str, &str)] = &[
 
 const COMPLETE_QUESTION: &str = "到复看日回填结果：实际发生的事，比任何推理都算数。";
 
+/// 人读时最多列几条未填完的记录：欠账全摊出来，列表就成了新的负担。
+const OPEN_SHOWN: usize = 3;
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 struct Ledger {
     #[serde(default)]
@@ -340,13 +343,24 @@ fn print_list(due_only: bool, json: bool) -> Result<(), AppError> {
         if outcome.open.is_empty() {
             println!("没有半截的记录");
         } else {
-            println!("未填完 {} 条", outcome.open.len());
-            for item in &outcome.open {
+            let shown = OPEN_SHOWN.min(outcome.open.len());
+            if outcome.open.len() > OPEN_SHOWN {
+                println!("未填完 {} 条（只列最近 {shown} 条）", outcome.open.len());
+            } else {
+                println!("未填完 {} 条", outcome.open.len());
+            }
+            for item in outcome.open.iter().rev().take(OPEN_SHOWN) {
                 println!(
                     "  {} {}  还差：{}",
                     item.id,
                     item.situation,
                     summarize_missing(&item.missing)
+                );
+            }
+            if outcome.open.len() > OPEN_SHOWN {
+                println!(
+                    "另有 {} 条未列出，用 --json 看全部",
+                    outcome.open.len() - OPEN_SHOWN
                 );
             }
         }

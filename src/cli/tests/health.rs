@@ -314,6 +314,24 @@ fn due_without_list_exits_2() {
 }
 
 #[test]
+fn list_human_collapses_old_open_records() {
+    let dir = lab();
+    for index in 0..5 {
+        let body = format!(r#"{{"situation":"事件{index}","thought":"念头{index}"}}"#);
+        record(&dir, &body);
+    }
+    let out = cmd(&dir)
+        .args(["health", "reflect", "--list"])
+        .output()
+        .expect("运行二进制");
+    let text = stdout_of(&out);
+    assert!(text.contains("未填完 5 条（只列最近 3 条）"), "{text}");
+    assert!(text.contains("另有 2 条未列出"), "{text}");
+    assert!(text.contains("事件4"), "应列出最新的记录：{text}");
+    assert!(!text.contains("事件0"), "不应列出最旧的记录：{text}");
+}
+
+#[test]
 fn id_shows_one_record() {
     let dir = lab();
     let outcome = record(&dir, FULL);

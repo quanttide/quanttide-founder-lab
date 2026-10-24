@@ -114,7 +114,7 @@ cargo test --offline                                 ✅ 32 passed（tests/work.
 存储为同一数据目录下的 `reflect.json`，与 `clarify.json` 分开。认知扭曲词表十项，英文键与中文标签互为别名，落库统一存中文；`domain` 与 `control` 取值不认识、日期不是 `YYYY-MM-DD`、强度超出 0-100 都退 2。
 
 ```text
-cargo test --offline  → 61 passed（unit 5 + health 19 + product 37）
+cargo test --offline  → 62 passed（unit 5 + health 20 + product 37）
 ```
 
 契约见 [docs/api-references/health.md](docs/api-references/health.md)；测试覆盖表见 [tests/health.rs](tests/health.rs)。

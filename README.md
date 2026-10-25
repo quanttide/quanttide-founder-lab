@@ -31,7 +31,6 @@ examples/
     data/         中间数据（JSON：段清单、金标、两臂结果、任务扫描）
     tests/        固定测试（unittest，不依赖图形界面）
 src/
-  cli/            CLI 脚手架（Rust，qtfounder-cli-lab）
   studio/         工作台骨架（Flutter，qtfounder-studio-lab）
 ```
 
@@ -43,7 +42,7 @@ src/
 - 固定测试 `python3 -m unittest discover -s examples/novel-planner/tests`：锁定切段、规则与看板读写行为，改代码前先跑
 - 任务发现规则：`docs/ideas/write/task-discovery.md`；写作规则：`docs/ideas/write/writing-rules.md`；流程：`docs/ideas/write/creation-log-workflow.md`
 - 双库生成控制（实验中）：风格规则库 + 情节账本，生成前注入、生成后回流，验证 H1–H4；规格与旋钮见 `examples/novel-planner/docs/dual-library.md`，骨架护栏在 `examples/novel-planner/src/dual_library.py`
-- 独立应用骨架：`src/cli`（Rust 脚手架，`qtfounder-cli-lab`）与 `src/studio`（Flutter 骨架，`qtfounder-studio-lab`），结构参考 qtfounder；当前只含入口与冒烟测试
+- 独立应用骨架：`src/studio`（Flutter 骨架，`qtfounder-studio-lab`），结构参考 qtfounder；当前只含入口与冒烟测试。实验室 CLI 已全部升进正式版 `qtfounder`（`product` 与 `think`），本仓不留复制件。
 
 ## 工作方式
 

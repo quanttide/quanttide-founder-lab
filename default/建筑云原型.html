@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>场地平面示意图</title>
+<style>
+  :root{
+    --line:#1f2937;
+    --dim:#2563eb;
+    --zone:#f1f5f9;
+    --zone2:#eef2ff;
+    --paper:#fffdf8;
+    --ink:#111827;
+    --muted:#6b7280;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    padding:32px 16px 64px;
+    background:#e5e7eb;
+    font-family:"Microsoft YaHei","PingFang SC","WenQuanYi Micro Hei",system-ui,sans-serif;
+    color:var(--ink);
+  }
+  .sheet{
+    max-width:1000px;margin:0 auto;background:var(--paper);
+    padding:40px 44px 32px;border-radius:6px;
+    box-shadow:0 10px 30px rgba(0,0,0,.12);
+  }
+  header.title{text-align:center;border-bottom:2px solid var(--line);padding-bottom:14px;margin-bottom:8px;}
+  header.title h1{margin:0;font-size:26px;letter-spacing:4px;}
+  header.title .sub{margin-top:6px;font-size:13px;color:var(--muted);letter-spacing:1px;}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 28px;justify-content:space-between;
+        font-size:12.5px;color:var(--muted);padding:12px 2px 4px;}
+  .meta b{color:var(--ink);font-weight:600;}
+  .stage{position:relative;margin:26px auto 10px;width:100%;aspect-ratio:16/11;}
+
+  /* ===== SVG 图 ===== */
+  svg{width:100%;height:100%;display:block;}
+  .wall{fill:none;stroke:var(--line);stroke-width:5;stroke-linejoin:miter;}
+  .wall-thin{fill:none;stroke:var(--line);stroke-width:2.2;}
+  .zone{stroke:var(--line);stroke-width:1.4;stroke-dasharray:5 4;}
+  .hatch{stroke:#94a3b8;stroke-width:1;}
+  .dim-line{stroke:var(--dim);stroke-width:1.1;}
+  .dim-arrow{fill:none;stroke:var(--dim);stroke-width:1.1;}
+  .dim-txt{font-size:13px;fill:var(--dim);text-anchor:middle;font-weight:700;}
+  .label{font-size:14px;fill:var(--ink);font-weight:700;text-anchor:middle;}
+  .label.small{font-size:11.5px;fill:var(--muted);font-weight:600;}
+  .comp{font-size:15px;fill:var(--ink);font-weight:800;}
+  .note{font-size:11px;fill:#b45309;font-weight:700;}
+  .fill-a{fill:var(--zone);}
+  .fill-b{fill:var(--zone2);}
+
+  .legend{margin-top:18px;border:1px solid #d1d5db;border-radius:6px;padding:14px 18px;font-size:13px;}
+  .legend h3{margin:0 0 8px;font-size:14px;letter-spacing:1px;}
+  .legend ul{margin:0;padding-left:0;list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:6px 18px;}
+  .legend li{display:flex;align-items:center;gap:8px;color:#374151;}
+  .sw{width:26px;height:0;border-top:4px solid var(--line);}
+  .sw.d{width:26px;border-top:2px dashed var(--dim);}
+  .sw.z{width:22px;height:12px;background:var(--zone);border:1px dashed #94a3b8;}
+  .foot{margin-top:22px;text-align:center;font-size:12px;color:#9ca3af;border-top:1px solid #e5e7eb;padding-top:12px;}
+
+  .btns{position:sticky;top:8px;z-index:9;display:flex;gap:10px;justify-content:center;margin-bottom:16px;}
+  .btns button{background:#fff;border:1px solid #cbd5e1;color:#334155;padding:8px 16px;
+    border-radius:20px;font-size:13px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.06);}
+  .btns button:hover{background:#f8fafc;border-color:#94a3b8;}
+  @media print{
+    body{background:#fff;padding:0;}
+    .sheet{box-shadow:none;max-width:none;padding:0;}
+    .btns{display:none;}
+  }
+  @media (max-width:600px){
+    .sheet{padding:22px 16px;}
+    header.title h1{font-size:20px;letter-spacing:2px;}
+    .stage{aspect-ratio:4/3;}
+  }
+</style>
+</head>
+<body>
+<div class="btns">
+  <button onclick="window.print()">🖨 打印 / 导出 PDF</button>
+</div>
+
+<div class="sheet">
+  <header class="title">
+    <h1>场 地 平 面 示 意 图</h1>
+    <div class="sub">依据现场手绘草图整理　·　单位：米（m）</div>
+  </header>
+
+  <div class="meta">
+    <span><b>朝向</b>：上北 · 下南 · 左西 · 右东</span>
+    <span><b>主体净尺寸</b>：2.66（东西向）× 2.17（南北向）</span>
+    <span><b>西侧附设带</b>：宽 0.57　（内含 0.30 窄条 + 0.27 台阶区）</span>
+    <span><b>南侧突出段</b>：长 2.90　端部宽 1.80</span>
+  </div>
+
+  <div class="stage">
+  <svg viewBox="0 0 800 550" role="img" aria-label="场地平面示意图">
+    <defs>
+      <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,1 L10,5 L0,9 z" fill="#2563eb"/>
+      </marker>
+      <pattern id="ht" width="8" height="8" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+        <line class="hatch" x1="0" y1="0" x2="0" y2="8"/>
+      </pattern>
+    </defs>
+
+    <!-- ===== 主体房间 2.66 x 2.17 ===== -->
+    <rect class="fill-a" x="230" y="120" width="380" height="310"/>
+    <rect class="wall" x="230" y="120" width="380" height="310"/>
+
+    <!-- ===== 西侧附设带 0.57 ===== -->
+    <rect class="fill-b" x="150" y="120" width="80" height="310"/>
+    <rect class="wall" x="150" y="120" width="80" height="310"/>
+    <!-- 内部 0.30 窄条 -->
+    <rect x="150" y="120" width="43" height="310" fill="url(#ht)" stroke="#1f2937" stroke-width="1.4"/>
+    <line class="wall-thin" x1="193" y1="120" x2="193" y2="430"/>
+    <!-- 1.08 分区线 -->
+    <line class="zone" x1="150" y1="255" x2="230" y2="255"/>
+    <text class="label small" x="118" y="248">1.08</text>
+
+    <!-- ===== 南侧突出段：台阶/楼梯 ===== -->
+    <rect class="fill-b" x="230" y="440" width="380" height="74"/>
+    <rect class="wall" x="230" y="440" width="380" height="74"/>
+    <!-- 折向下方的 2.90 长段 -->
+    <rect class="fill-b" x="400" y="514" width="130" height="0"/>
+    <line class="wall" x1="400" y1="514" x2="400" y2="660"/>
+    <line class="wall" x1="530" y1="514" x2="530" y2="660"/>
+    <line class="wall" x1="400" y1="660" x2="530" y2="660"/>
+    <!-- 台阶斜线示意 -->
+    <line class="wall-thin" x1="400" y1="514" x2="530" y2="660"/>
+    <text class="note" x="465" y="540" transform="rotate(48 465 540)">楼梯 / 台阶</text>
+
+    <!-- ===== 北向尺寸 2.66（内侧） ===== -->
+    <line class="dim-line" x1="230" y1="88" x2="610" y2="88" marker-start="url(#ar)" marker-end="url(#ar)"/>
+    <line class="dim-line" x1="230" y1="112" x2="230" y2="92"/>
+    <line class="dim-line" x1="610" y1="112" x2="610" y2="92"/>
+    <rect x="375" y="74" width="90" height="22" fill="#fffdf8"/>
+    <text class="dim-txt" x="420" y="90">2.66</text>
+    <text class="label small" x="420" y="68">内侧</text>
+
+    <!-- ===== 西向总高 2.17 ===== -->
+    <line class="dim-line" x1="122" y1="120" x2="122" y2="430" marker-start="url(#ar)" marker-end="url(#ar)"/>
+    <line class="dim-line" x1="146" y1="120" x2="126" y2="120"/>
+    <line class="dim-line" x1="146" y1="430" x2="126" y2="430"/>
+    <rect x="98" y="260" width="52" height="24" fill="#fffdf8"/>
+    <text class="dim-txt" x="124" y="277" transform="rotate(-90 124 277)">2.17</text>
+
+    <!-- ===== 西侧附设带宽 0.57 ===== -->
+    <line class="dim-line" x1="150" y1="96" x2="230" y2="96" marker-start="url(#ar)" marker-end="url(#ar)"/>
+    <text class="dim-txt" x="190" y="90">0.57</text>
+
+    <!-- ===== 0.30 窄条 ===== -->
+    <line class="dim-line" x1="150" y1="450" x2="193" y2="450" marker-start="url(#ar)" marker-end="url(#ar)"/>
+    <text class="dim-txt" x="171" y="444">0.30</text>
+
+    <!-- ===== 南侧突出段宽 1.80 ===== -->
+    <line class="dim-line" x1="230" y1="472" x2="400" y2="472" marker-start="url(#ar)" marker-end="url(#ar)"/>
+    <text class="dim-txt" x="315" y="466">1.80</text>
+
+    <!-- ===== 2.90 斜向长度 ===== -->
+    <line class="dim-line" x1="400" y1="668" x2="530" y2="668" marker-start="url(#ar)" marker-end="url(#ar)"/>
+    <text class="dim-txt" x="465" y="662">2.90</text>
+
+    <!-- ===== 东向总高（重复标注） ===== -->
+    <line class="dim-line" x1="678" y1="120" x2="678" y2="514" marker-start="url(#ar)" marker-end="url(#ar)"/>
+    <text class="dim-txt" x="672" y="320" transform="rotate(-90 672 320)">2.17 对应</text>
+
+    <!-- ===== 方位罗盘 ===== -->
+    <g>
+      <circle cx="80" cy="80" r="30" fill="#fff" stroke="#1f2937" stroke-width="1.6"/>
+      <path d="M80,52 L87,80 L80,96 L73,80 Z" fill="#1f2937"/>
+      <text class="comp" x="80" y="47" text-anchor="middle">北</text>
+      <text class="label small" x="80" y="118" text-anchor="middle">N</text>
+    </g>
+    <text class="comp" x="24" y="300">西</text>
+    <text class="comp" x="762" y="300" text-anchor="end">东</text>
+    <text class="comp" x="400" y="526" text-anchor="middle" opacity=".5">南</text>
+
+    <!-- 区域名 -->
+    <text class="label" x="420" y="285">主体区域</text>
+    <text class="label small" x="190" y="175">西侧附设带</text>
+    <text class="label small" x="330" y="482">南侧突出段</text>
+  </svg>
+  </div>
+
+  <div class="legend">
+    <h3>图 例 与 说 明</h3>
+    <ul>
+      <li><span class="sw"></span>外墙 / 轮廓线</li>
+      <li><span class="sw d"></span>尺寸标注线（蓝色）</li>
+      <li><span class="sw z"></span>功能分区 / 内侧窄条（斜线填充）</li>
+      <li>2.66 m 为北侧内侧净宽，2.17 m 为西侧净深</li>
+      <li>0.57 m 西侧带含 0.30 m 固定窄条 + 0.27 m 过渡区，1.08 m 为竖向分段</li>
+      <li>右下 2.90 m 长、1.80 m 宽段按草图判读为楼梯/台阶延伸</li>
+      <li>草图部分数字有涂改，施工前请以现场实测复核为准</li>
+    </ul>
+  </div>
+
+  <div class="foot">示意图 · 非按比例精确制图　|　绘制日期 2026-11-02</div>
+</div>
+</body>
+</html>
